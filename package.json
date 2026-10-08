@@ -1,0 +1,11 @@
+{
+  "name": "react-form-builder-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter playground dev",
+    "typecheck": "pnpm --filter @antash00/form-builder-mui typecheck && pnpm --filter playground typecheck",
+    "build": "pnpm --filter @antash00/form-builder-mui build && pnpm --filter playground build",
+    "check": "pnpm typecheck && pnpm build"
+  }
+}
