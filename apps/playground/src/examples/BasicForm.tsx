@@ -1,14 +1,21 @@
-import { defineConfig, FormBuilder } from "@antash00/form-builder-mui";
+import { useState } from 'react'
+import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
 
 const config = defineConfig([
     {
         accessor: 'name',
         type: 'text',
+        id: 'person-name',
         properties: {
-            label: "Name",
+            label: 'Name',
             placeholder: 'Enter name',
             fullWidth: true,
-            variant: 'filled'
+            variant: 'filled',
+            helperText: 'Your full name',
+            slotProps: {
+                htmlInput: { autoComplete: 'name', maxLength: 60 },
+                inputLabel: (state) => ({ shrink: state.required }),
+            },
         },
         rules: {
             required: 'Name is required',
@@ -16,14 +23,18 @@ const config = defineConfig([
     },
 ])
 
-export function BasicForm() {
+export const BasicForm = () => {
+    const [submittedName, setSubmittedName] = useState<string | null>(null)
+
     return (
-        <FormBuilder
-            config={ config }
-            onSubmit={ (values, result) => {
-                console.log(values)
-                console.log(result)
-            } }
-        />
+        <>
+            <FormBuilder
+                config={config}
+                onSubmit={(values) => {
+                    setSubmittedName(values.name)
+                }}
+            />
+            {submittedName !== null && <output aria-label="Submitted name">{submittedName}</output>}
+        </>
     )
 }

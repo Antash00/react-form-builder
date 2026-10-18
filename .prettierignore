@@ -1,0 +1,11 @@
+.agent-docs/
+AGENTS.md
+.agents/
+.codex/
+.git/
+.idea/
+**/node_modules/
+**/dist/
+**/test-results/
+**/playwright-report/
+pnpm-lock.yaml

@@ -8,13 +8,13 @@ export default defineConfig(({ command }) => ({
         alias:
             command === 'serve'
                 ? [
-                    {
-                        find: /^@antash00\/form-builder-mui$/,
-                        replacement: fileURLToPath(
-                            new URL('../../packages/mui/src/index.ts', import.meta.url),
-                        ),
-                    },
-                ]
+                      {
+                          find: /^@antash00\/form-builder-mui$/,
+                          replacement: fileURLToPath(
+                              new URL('../../packages/mui/src/index.ts', import.meta.url),
+                          ),
+                      },
+                  ]
                 : [],
     },
 }))

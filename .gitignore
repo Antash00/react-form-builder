@@ -3,3 +3,5 @@ dist/
 .vite/
 *.log
 .idea/
+test-results/
+playwright-report/

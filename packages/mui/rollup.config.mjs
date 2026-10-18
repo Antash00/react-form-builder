@@ -1,12 +1,12 @@
 import typescript from '@rollup/plugin-typescript'
 
 const external = (id) =>
-    id === 'react'
-    || id.startsWith('react/')
-    || id === 'react-dom'
-    || id === 'react-hook-form'
-    || id.startsWith('@mui/')
-    || id.startsWith('@emotion/')
+    id === 'react' ||
+    id.startsWith('react/') ||
+    id === 'react-dom' ||
+    id === 'react-hook-form' ||
+    id.startsWith('@mui/') ||
+    id.startsWith('@emotion/')
 
 export default {
     input: 'src/index.ts',

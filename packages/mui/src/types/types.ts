@@ -1,5 +1,5 @@
-import type { RegisterOptions } from "react-hook-form";
-import type { TextFieldProps } from "@mui/material";
+import type { RegisterOptions } from 'react-hook-form'
+import type { TextFieldProperties } from './inputsProperties'
 
 export type BaseFieldConfig<TAccessor extends string = string, TType extends string = string> = {
     accessor: TAccessor
@@ -7,24 +7,13 @@ export type BaseFieldConfig<TAccessor extends string = string, TType extends str
     id?: string
     className?: string
 }
-export type TextFieldConfig<TAccessor extends string = string> = BaseFieldConfig<TAccessor, 'text'> & {
-    properties?: Omit<
-        TextFieldProps,
-        | 'name'
-        | 'value'
-        | 'defaultValue'
-        | 'onChange'
-        | 'onBlur'
-        | 'error'
-        | 'id'
-        | 'className'
-    >
+export type TextFieldConfig<TAccessor extends string = string> = BaseFieldConfig<
+    TAccessor,
+    'text'
+> & {
+    properties?: TextFieldProperties
 
-    rules?: Pick<
-        RegisterOptions,
-        'required' | 'minLength' | 'maxLength' | 'pattern'
-    >
+    rules?: Pick<RegisterOptions, 'required' | 'minLength' | 'maxLength' | 'pattern'>
 }
 
-export type ItemField<TAccessor extends string = string> =
-    TextFieldConfig<TAccessor>
+export type ItemField<TAccessor extends string = string> = TextFieldConfig<TAccessor>

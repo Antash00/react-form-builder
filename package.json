@@ -1,11 +1,28 @@
 {
-  "name": "react-form-builder-workspace",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "pnpm --filter playground dev",
-    "typecheck": "pnpm --filter @antash00/form-builder-mui typecheck && pnpm --filter playground typecheck",
-    "build": "pnpm --filter @antash00/form-builder-mui build && pnpm --filter playground build",
-    "check": "pnpm typecheck && pnpm build"
-  }
+    "name": "react-form-builder-workspace",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "pnpm --filter playground dev",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier . --write",
+        "format:check": "prettier . --check",
+        "typecheck": "pnpm --filter @antash00/form-builder-mui typecheck && pnpm --filter playground typecheck",
+        "build": "pnpm --filter @antash00/form-builder-mui build && pnpm --filter playground build",
+        "test:types": "pnpm --filter @antash00/form-builder-mui test:types",
+        "test": "pnpm --filter @antash00/form-builder-mui test",
+        "test:e2e": "pnpm --filter playground test:e2e",
+        "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm build && pnpm test:types && pnpm --filter @antash00/form-builder-mui test:unit && pnpm test:e2e"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.13.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-react-hooks": "^7.1.1",
+        "eslint-plugin-react-refresh": "^0.5.7",
+        "globals": "^17.13.0",
+        "prettier": "^3.9.10",
+        "typescript-eslint": "^8.71.2"
+    }
 }

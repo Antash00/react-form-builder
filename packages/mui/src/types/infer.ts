@@ -1,13 +1,11 @@
-import type { ItemField } from "./types";
+import type { ItemField } from './types'
 
-export type InferFieldValue<TField extends ItemField> =
-    TField extends { type: 'text' }
-        ? string
-        : never
+export type InferFieldValue<TField extends ItemField> = TField extends { type: 'text' }
+    ? string
+    : never
 
 export type InferFormValues<TConfig extends readonly ItemField[]> = {
-    [TField in TConfig[number] as TField['accessor']]:
-    InferFieldValue<TField>
+    [TField in TConfig[number] as TField['accessor']]: InferFieldValue<TField>
 }
 
 export type InferFieldResult<TField extends ItemField> = {
@@ -16,6 +14,5 @@ export type InferFieldResult<TField extends ItemField> = {
 }
 
 export type InferFormResult<TConfig extends readonly ItemField[]> = {
-    [TField in TConfig[number] as TField['accessor']]:
-    InferFieldResult<TField>
+    [TField in TConfig[number] as TField['accessor']]: InferFieldResult<TField>
 }
