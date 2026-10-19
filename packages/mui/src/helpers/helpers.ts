@@ -1,12 +1,8 @@
 import type { InferFormResult, InferFormValues, ItemField } from '../types'
 
-type ConfigFromAccessors<TAccessors extends readonly string[]> = {
-    readonly [TIndex in keyof TAccessors]: ItemField<TAccessors[TIndex] & string>
-}
-
-export const defineConfig = <const TAccessors extends readonly string[]>(
-    config: ConfigFromAccessors<TAccessors>,
-): ConfigFromAccessors<TAccessors> => config
+export const defineConfig = <const TConfig extends readonly ItemField[]>(
+    config: TConfig,
+): TConfig => config
 
 export const buildFormResult = <TConfig extends readonly ItemField[]>(
     config: TConfig,

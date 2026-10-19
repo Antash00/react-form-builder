@@ -11,5 +11,11 @@ test('validates an empty field and submits typed text', async ({ page }) => {
 
     await name.fill('Ada')
     await page.getByRole('button', { name: 'Submit' }).click()
+    const confirmation = page.getByRole('checkbox', { name: /I confirm the details/ })
+    await expect(page.getByText('Confirmation is required')).toBeVisible()
+    await expect(confirmation).toBeFocused()
+
+    await confirmation.check()
+    await page.getByRole('button', { name: 'Submit' }).click()
     await expect(page.getByRole('status', { name: 'Submitted name' })).toHaveText('Ada')
 })

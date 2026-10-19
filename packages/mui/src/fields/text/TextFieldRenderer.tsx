@@ -7,11 +7,10 @@ type TextFieldRendererProps<TFieldValues extends FieldValues> = {
     control: Control<TFieldValues>
 }
 
-export function TextFieldRenderer<TFieldValues extends FieldValues>({
+export const TextFieldRenderer = <TFieldValues extends FieldValues>({
     config,
     control,
-}: TextFieldRendererProps<TFieldValues>) {
-    // FormBuilder validates flat accessors and infers TFieldValues from this config.
+}: TextFieldRendererProps<TFieldValues>) => {
     const name = config.accessor as FieldPath<TFieldValues>
     const requiredRule = config.rules?.required
     const required = typeof requiredRule === 'object' ? requiredRule.value : Boolean(requiredRule)

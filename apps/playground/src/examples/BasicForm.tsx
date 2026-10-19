@@ -21,6 +21,15 @@ const config = defineConfig([
             required: 'Name is required',
         },
     },
+    {
+        accessor: 'confirmed',
+        type: 'checkbox',
+        properties: {
+            label: 'I confirm the details',
+            helperText: 'Review the name before submitting',
+        },
+        rules: { required: 'Confirmation is required' },
+    },
 ])
 
 export const BasicForm = () => {
@@ -32,6 +41,7 @@ export const BasicForm = () => {
                 config={config}
                 onSubmit={(values) => {
                     setSubmittedName(values.name)
+                    console.log(values)
                 }}
             />
             {submittedName !== null && <output aria-label="Submitted name">{submittedName}</output>}

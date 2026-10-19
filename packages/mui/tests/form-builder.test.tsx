@@ -34,6 +34,98 @@ test('submits initialized strings for untouched fields and partial edit defaults
     )
 })
 
+test('initializes checkbox values as booleans and applies partial edit defaults', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        { accessor: 'name', type: 'text', properties: { label: 'Name' } },
+        {
+            accessor: 'active',
+            type: 'checkbox',
+            properties: {
+                slotProps: {
+                    input: (state) => ({ 'aria-label': state.disabled ? 'Disabled' : 'Active' }),
+                },
+            },
+        },
+        {
+            accessor: 'archived',
+            type: 'checkbox',
+            properties: { slotProps: { input: { 'aria-label': 'Archived' } } },
+        },
+    ])
+
+    render(<FormBuilder config={config} defaultValues={{ active: true }} onSubmit={onSubmit} />)
+
+    const active = screen.getByRole('checkbox', { name: 'Active' })
+    const archived = screen.getByRole('checkbox', { name: 'Archived' })
+    expect(active).toBeChecked()
+    expect(archived).not.toBeChecked()
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { name: '', active: true, archived: false },
+        {
+            name: { type: 'text', value: '' },
+            active: { type: 'checkbox', value: true },
+            archived: { type: 'checkbox', value: false },
+        },
+    )
+
+    await user.click(archived)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+        { name: '', active: true, archived: true },
+        {
+            name: { type: 'text', value: '' },
+            active: { type: 'checkbox', value: true },
+            archived: { type: 'checkbox', value: true },
+        },
+    )
+})
+
+test('shows checkbox label and validation message, then restores helper text', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'consent',
+            type: 'checkbox',
+            id: 'consent',
+            className: 'consent-field',
+            properties: {
+                label: 'Agree to terms',
+                helperText: 'Read the terms before agreeing',
+                slotProps: { input: { 'aria-describedby': 'external-help' } },
+            },
+            rules: { required: 'Agreement is required' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+
+    const checkbox = screen.getByRole('checkbox', { name: /Agree to terms/ })
+    const helper = screen.getByText('Read the terms before agreeing')
+    expect(checkbox).toHaveAttribute('id', 'consent')
+    expect(checkbox).toBeRequired()
+    expect(checkbox.closest('.consent-field')).not.toBeNull()
+    expect(checkbox).toHaveAttribute('aria-describedby', `external-help ${helper.id}`)
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    const error = await screen.findByText('Agreement is required')
+    expect(checkbox).toHaveAttribute('aria-invalid', 'true')
+    expect(checkbox).toHaveAttribute('aria-describedby', `external-help ${error.id}`)
+    expect(checkbox).toHaveFocus()
+
+    await user.click(checkbox)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { consent: true },
+        { consent: { type: 'checkbox', value: true } },
+    )
+    expect(screen.getByText('Read the terms before agreeing')).toBeVisible()
+})
+
 test('connects validation, focus, required state and input identity to RHF', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()

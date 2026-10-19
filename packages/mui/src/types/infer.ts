@@ -1,8 +1,8 @@
 import type { ItemField } from './types'
 
-export type InferFieldValue<TField extends ItemField> = TField extends { type: 'text' }
-    ? string
-    : never
+export type InferFieldValue<TField extends ItemField> =
+    | (TField extends { type: 'text' } ? string : never)
+    | (TField extends { type: 'checkbox' } ? boolean : never)
 
 export type InferFormValues<TConfig extends readonly ItemField[]> = {
     [TField in TConfig[number] as TField['accessor']]: InferFieldValue<TField>
