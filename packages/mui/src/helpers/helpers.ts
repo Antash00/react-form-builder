@@ -1,7 +1,19 @@
-import type { InferFormResult, InferFormValues, ItemField } from '../types'
+import type {
+    CheckboxGroupFieldConfig,
+    InferFormResult,
+    InferFormValues,
+    ItemField,
+} from '../types'
+
+type ValidateGroupItems<TField> = TField extends {
+    type: 'checkboxGroup'
+    properties: { items: readonly (infer TItem)[] }
+}
+    ? CheckboxGroupFieldConfig<TItem>
+    : TField
 
 export const defineConfig = <const TConfig extends readonly ItemField[]>(
-    config: TConfig,
+    config: TConfig & { [TIndex in keyof TConfig]: ValidateGroupItems<NoInfer<TConfig[TIndex]>> },
 ): TConfig => config
 
 export const buildFormResult = <TConfig extends readonly ItemField[]>(

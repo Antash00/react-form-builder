@@ -3,6 +3,7 @@ import type { InferFormResult, InferFormValues, ItemField } from '../types'
 import { TextFieldRenderer } from '../fields/text'
 import { assertValidAccessors, buildFormResult } from '../helpers'
 import { CheckboxFieldRenderer } from '../fields/checkbox'
+import { CheckboxGroupFieldRenderer } from '../fields/checkbox-group'
 
 type FormBuilderProps<TConfig extends readonly ItemField[]> = {
     config: TConfig
@@ -18,7 +19,7 @@ function buildInitialValues<TConfig extends readonly ItemField[]>(
     defaultValues?: DefaultValues<InferFormValues<TConfig>>,
 ): DefaultValues<InferFormValues<TConfig>> {
     const providedValues = new Map(Object.entries(defaultValues ?? {}))
-    const initialValues: Record<string, string | boolean> = {}
+    const initialValues: Record<string, string | boolean | unknown[]> = {}
     for (const field of config) {
         const value = providedValues.get(field.accessor)
         switch (field.type) {
@@ -27,6 +28,9 @@ function buildInitialValues<TConfig extends readonly ItemField[]>(
                 break
             case 'checkbox':
                 initialValues[field.accessor] = typeof value === 'boolean' ? value : false
+                break
+            case 'checkboxGroup':
+                initialValues[field.accessor] = Array.isArray(value) ? value : []
                 break
         }
     }
@@ -67,6 +71,14 @@ export const FormBuilder = <const TConfig extends readonly ItemField[]>({
                     case 'checkbox':
                         return (
                             <CheckboxFieldRenderer<FormValues>
+                                key={field.accessor}
+                                config={field}
+                                control={control}
+                            />
+                        )
+                    case 'checkboxGroup':
+                        return (
+                            <CheckboxGroupFieldRenderer<FormValues>
                                 key={field.accessor}
                                 config={field}
                                 control={control}

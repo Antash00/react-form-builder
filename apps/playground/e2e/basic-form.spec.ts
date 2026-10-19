@@ -17,5 +17,12 @@ test('validates an empty field and submits typed text', async ({ page }) => {
 
     await confirmation.check()
     await page.getByRole('button', { name: 'Submit' }).click()
+    await expect(page.getByText('Choose at least one role')).toBeVisible()
+    const editor = page.getByRole('checkbox', { name: 'Editor' })
+    await expect(editor).toBeFocused()
+
+    await editor.check()
+    await page.getByRole('button', { name: 'Submit' }).click()
     await expect(page.getByRole('status', { name: 'Submitted name' })).toHaveText('Ada')
+    await expect(page.getByRole('status', { name: 'Submitted roles' })).toHaveText('Editor')
 })

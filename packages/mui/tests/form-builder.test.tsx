@@ -126,6 +126,120 @@ test('shows checkbox label and validation message, then restores helper text', a
     expect(screen.getByText('Read the terms before agreeing')).toBeVisible()
 })
 
+test('checkbox group preserves selected objects and matches defaults by key', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [
+        { id: 1, name: 'Editor' },
+        { id: 2, name: 'Reviewer' },
+    ]
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'checkboxGroup',
+            id: 'role-options',
+            className: 'role-field',
+            properties: {
+                label: 'Roles',
+                helperText: 'Choose your roles',
+                items: roles,
+                getItemLabel: (item: (typeof roles)[number]) => item.name,
+                getItemKey: (item: (typeof roles)[number]) => item.id,
+            },
+        },
+    ])
+    render(
+        <FormBuilder
+            config={config}
+            defaultValues={{ roles: [{ id: 1, name: 'Editor' }] }}
+            onSubmit={onSubmit}
+        />,
+    )
+
+    const editor = screen.getByRole('checkbox', { name: 'Editor' })
+    const reviewer = screen.getByRole('checkbox', { name: 'Reviewer' })
+    const helper = screen.getByText('Choose your roles')
+    expect(screen.getByRole('group', { name: 'Roles' })).toHaveAttribute(
+        'aria-labelledby',
+        'role-options',
+    )
+    expect(editor.closest('.role-field')).not.toBeNull()
+    expect(editor).toBeChecked()
+    expect(reviewer).not.toBeChecked()
+    expect(editor).toHaveAttribute('aria-describedby', helper.id)
+
+    await user.click(editor)
+    await user.click(reviewer)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { roles: [roles[1]] },
+        { roles: { type: 'checkboxGroup', value: [roles[1]] } },
+    )
+})
+
+test('checkbox group validates an empty selection and focuses its first input', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'checkboxGroup',
+            properties: {
+                label: 'Roles',
+                helperText: 'Choose your roles',
+                items: [{ id: 1, name: 'Editor' }],
+                getItemLabel: (item: { id: number; name: string }) => item.name,
+                getItemKey: (item: { id: number; name: string }) => item.id,
+            },
+            rules: { required: 'Choose a role' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+
+    const editor = screen.getByRole('checkbox', { name: 'Editor' })
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    const error = await screen.findByText('Choose a role')
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(editor).toHaveFocus()
+    expect(editor).toHaveAttribute('aria-invalid', 'true')
+    expect(editor).toHaveAttribute('aria-describedby', error.id)
+
+    await user.click(editor)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { roles: [{ id: 1, name: 'Editor' }] },
+        { roles: { type: 'checkboxGroup', value: [{ id: 1, name: 'Editor' }] } },
+    )
+    expect(screen.getByText('Choose your roles')).toBeVisible()
+})
+
+test('disabled checkbox group skips required validation and preserves its value', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'checkboxGroup',
+            properties: {
+                label: 'Roles',
+                disabled: true,
+                items: [{ id: 1, name: 'Editor' }],
+                getItemLabel: (item: { id: number; name: string }) => item.name,
+                getItemKey: (item: { id: number; name: string }) => item.id,
+            },
+            rules: { required: 'Choose a role' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    expect(screen.getByRole('checkbox', { name: 'Editor' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { roles: [] },
+        { roles: { type: 'checkboxGroup', value: [] } },
+    )
+    expect(screen.queryByText('Choose a role')).not.toBeInTheDocument()
+})
+
 test('connects validation, focus, required state and input identity to RHF', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()

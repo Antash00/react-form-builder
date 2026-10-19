@@ -5,6 +5,7 @@ import {
     defineConfig,
     FormBuilder,
     type CheckboxFieldConfig,
+    type CheckboxGroupFieldConfig,
     type InferFormValues,
     type TextFieldConfig,
 } from '../'
@@ -93,6 +94,93 @@ expectNotAssignable<CheckboxFieldConfig>({
     type: 'checkbox',
     rules: { pattern: { value: /yes/, message: 'Invalid' } },
 })
+
+type Role = { id: number; name: string }
+type Permission = { code: string }
+const roles: Role[] = [
+    { id: 1, name: 'Editor' },
+    { id: 2, name: 'Reviewer' },
+]
+const permissions: Permission[] = [{ code: 'read' }]
+const groupConfig = defineConfig([
+    { accessor: 'name', type: 'text' },
+    {
+        accessor: 'roles',
+        type: 'checkboxGroup',
+        properties: {
+            label: 'Roles',
+            items: roles,
+            row: true,
+            getItemLabel: (item: Role) => {
+                expectType<Role>(item)
+                return item.name
+            },
+            getItemKey: (item: Role) => item.id,
+        },
+        rules: { required: 'Choose a role' },
+    },
+    {
+        accessor: 'permissions',
+        type: 'checkboxGroup',
+        properties: {
+            label: 'Permissions',
+            items: permissions,
+            getItemLabel: (item: Permission) => item.code,
+            getItemKey: (item: Permission) => item.code,
+        },
+    },
+])
+declare const groupValues: InferFormValues<typeof groupConfig>
+expectType<Role[]>(groupValues.roles)
+expectType<Permission[]>(groupValues.permissions)
+expectNotAssignable<keyof typeof groupValues>('missing')
+expectNotAssignable<DefaultValues<InferFormValues<typeof groupConfig>>>({ roles: [false] })
+expectType<JSX.Element>(
+    <FormBuilder
+        config={groupConfig}
+        defaultValues={{ roles: [{ id: 1, name: 'Editor' }] }}
+        onSubmit={(submitted, result) => {
+            expectType<Role[]>(submitted.roles)
+            expectType<Permission[]>(submitted.permissions)
+            expectType<string>(submitted.name)
+            expectType<Role[]>(result.roles.value)
+        }}
+    />,
+)
+expectNotAssignable<CheckboxGroupFieldConfig<Role>>({
+    accessor: 'roles',
+    type: 'checkboxGroup',
+    properties: {
+        label: 'Roles',
+        items: roles,
+        getItemLabel: (item: Role) => item.name,
+        getItemKey: (item: Role) => item.id,
+    },
+    rules: { pattern: /yes/ },
+})
+expectNotAssignable<CheckboxGroupFieldConfig<Role>>({
+    accessor: 'roles',
+    type: 'checkboxGroup',
+    properties: {
+        label: 'Roles',
+        items: roles,
+        getItemLabel: (item: Role & { extra: string }) => item.extra,
+        getItemKey: (item: Role) => item.id,
+    },
+})
+defineConfig([
+    {
+        accessor: 'roles',
+        type: 'checkboxGroup',
+        properties: {
+            label: 'Roles',
+            items: roles,
+            // @ts-expect-error callback item cannot require properties absent from items
+            getItemLabel: (item: Role & { extra: string }) => item.extra,
+            getItemKey: (item: Role) => item.id,
+        },
+    },
+])
 
 type Properties = NonNullable<TextFieldConfig['properties']>
 expectNotAssignable<Properties>({ value: 'outside RHF' })
