@@ -1,9 +1,105 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
 
 afterEach(cleanup)
+
+test('text fields inherit MUI theme defaults and keep explicit field props', async () => {
+    const user = userEvent.setup()
+    const theme = createTheme({
+        components: {
+            MuiTextField: {
+                defaultProps: { color: 'secondary', variant: 'filled', helperText: 'Theme hint' },
+            },
+        },
+    })
+    const config = defineConfig([
+        {
+            accessor: 'name',
+            type: 'text',
+            properties: { label: 'Name' },
+            rules: { required: 'Name is required' },
+        },
+        {
+            accessor: 'title',
+            type: 'text',
+            properties: { label: 'Title', color: 'success', variant: 'outlined' },
+        },
+    ])
+
+    render(
+        <ThemeProvider theme={theme}>
+            <FormBuilder config={config} onSubmit={vi.fn()} />
+        </ThemeProvider>,
+    )
+
+    const name = screen.getByRole('textbox', { name: 'Name' })
+    const title = screen.getByRole('textbox', { name: 'Title' })
+    expect(name.closest('.MuiTextField-root')?.querySelector('.MuiInputLabel-root')).toHaveClass(
+        'MuiFormLabel-colorSecondary',
+    )
+    expect(name.closest('.MuiTextField-root')?.querySelector('.MuiFilledInput-root')).not.toBeNull()
+    expect(title.closest('.MuiTextField-root')?.querySelector('.MuiInputLabel-root')).toHaveClass(
+        'MuiFormLabel-colorSuccess',
+    )
+    expect(
+        title.closest('.MuiTextField-root')?.querySelector('.MuiOutlinedInput-root'),
+    ).not.toBeNull()
+    expect(screen.getAllByText('Theme hint')).toHaveLength(2)
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(await screen.findByText('Name is required')).toBeVisible()
+    expect(screen.getByText('Theme hint')).toBeVisible()
+})
+
+test('checkboxes use the parent MUI theme color unless config or validation overrides it', async () => {
+    const user = userEvent.setup()
+    const theme = createTheme({
+        components: { MuiCheckbox: { defaultProps: { color: 'secondary' } } },
+    })
+    const config = defineConfig([
+        {
+            accessor: 'consent',
+            type: 'checkbox',
+            properties: { label: 'Consent' },
+            rules: { required: 'Consent is required' },
+        },
+        {
+            accessor: 'featured',
+            type: 'checkbox',
+            properties: { label: 'Featured', color: 'success' },
+        },
+        {
+            accessor: 'roles',
+            type: 'checkboxGroup',
+            properties: {
+                label: 'Roles',
+                items: ['Editor'],
+                getItemLabel: (item: string) => item,
+                getItemKey: (item: string) => item,
+            },
+        },
+    ])
+
+    render(
+        <ThemeProvider theme={theme}>
+            <FormBuilder config={config} onSubmit={vi.fn()} />
+        </ThemeProvider>,
+    )
+
+    const consent = screen.getByRole('checkbox', { name: 'Consent' })
+    const featured = screen.getByRole('checkbox', { name: 'Featured' })
+    const editor = screen.getByRole('checkbox', { name: 'Editor' })
+    expect(consent.closest('.MuiCheckbox-root')).toHaveClass('MuiCheckbox-colorSecondary')
+    expect(featured.closest('.MuiCheckbox-root')).toHaveClass('MuiCheckbox-colorSuccess')
+    expect(editor.closest('.MuiCheckbox-root')).toHaveClass('MuiCheckbox-colorSecondary')
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(await screen.findByText('Consent is required')).toBeVisible()
+    expect(consent.closest('.MuiCheckbox-root')).toHaveClass('MuiCheckbox-colorError')
+})
 
 test('submits initialized strings for untouched fields and partial edit defaults', async () => {
     const user = userEvent.setup()
@@ -238,6 +334,225 @@ test('disabled checkbox group skips required validation and preserves its value'
         { roles: { type: 'checkboxGroup', value: [] } },
     )
     expect(screen.queryByText('Choose a role')).not.toBeInTheDocument()
+})
+
+test('select preserves a chosen object and matches an edit default by key', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [
+        { id: 0, name: 'Editor' },
+        { id: 2, name: 'Reviewer' },
+    ]
+    const defaultRole = { id: 0, name: 'Editor' }
+    const config = defineConfig([
+        {
+            accessor: 'primaryRole',
+            type: 'select',
+            id: 'primary-role',
+            properties: {
+                label: 'Primary role',
+                helperText: 'Choose your main role',
+                'aria-describedby': 'external-help',
+                variant: 'filled',
+                fullWidth: true,
+                emptyLabel: 'None',
+                items: roles,
+                getItemLabel: (item: (typeof roles)[number]) => item.name,
+                getItemKey: (item: (typeof roles)[number]) => item.id,
+            },
+        },
+    ])
+    render(
+        <FormBuilder
+            config={config}
+            defaultValues={{ primaryRole: defaultRole }}
+            onSubmit={onSubmit}
+        />,
+    )
+
+    const select = screen.getByRole('combobox', { name: 'Primary role' })
+    expect(select).toHaveTextContent('Editor')
+    expect(select).toHaveAttribute('id', 'primary-role')
+    expect(screen.getByText('Primary role')).toHaveClass('MuiInputLabel-filled')
+    expect(select).toHaveAttribute(
+        'aria-describedby',
+        `external-help ${screen.getByText('Choose your main role').id}`,
+    )
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[0][0].primaryRole).toEqual(defaultRole)
+    await user.click(select)
+    await user.click(screen.getByRole('option', { name: 'Reviewer' }))
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { primaryRole: roles[1] },
+        { primaryRole: { type: 'select', value: roles[1] } },
+    )
+
+    await user.click(select)
+    await user.click(screen.getByRole('option', { name: 'None' }))
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+        { primaryRole: null },
+        { primaryRole: { type: 'select', value: null } },
+    )
+})
+
+test('select validates an empty required value and focuses the input', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'primaryRole',
+            type: 'select',
+            properties: {
+                label: 'Primary role',
+                helperText: 'Choose a role',
+                items: [{ id: 1, name: 'Editor' }],
+                getItemLabel: (item: { id: number; name: string }) => item.name,
+                getItemKey: (item: { id: number; name: string }) => item.id,
+            },
+            rules: { required: 'Choose a primary role' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const select = screen.getByRole('combobox', { name: 'Primary role' })
+    expect(select).toBeRequired()
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    const error = await screen.findByText('Choose a primary role')
+    expect(error).toBeVisible()
+    expect(select).toHaveAttribute('aria-describedby', error.id)
+    expect(select).toHaveAttribute('aria-invalid', 'true')
+    expect(select).toHaveFocus()
+    await user.click(select)
+    await user.click(screen.getByRole('option', { name: 'Editor' }))
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { primaryRole: { id: 1, name: 'Editor' } },
+        { primaryRole: { type: 'select', value: { id: 1, name: 'Editor' } } },
+    )
+    expect(screen.getByText('Choose a role')).toBeVisible()
+})
+
+test('multiple select initializes an array and preserves selected objects', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [
+        { id: 0, name: 'Editor' },
+        { id: 2, name: 'Reviewer' },
+    ]
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'select',
+            properties: {
+                label: 'Roles',
+                multiple: true,
+                items: roles,
+                getItemLabel: (item: (typeof roles)[number]) => item.name,
+                getItemKey: (item: (typeof roles)[number]) => item.id.toString(),
+            },
+        },
+    ])
+    const form = render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const select = screen.getByRole('combobox', { name: 'Roles' })
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+        { roles: [] },
+        { roles: { type: 'select', value: [] } },
+    )
+    await user.click(select)
+    await user.click(screen.getByRole('option', { name: 'Editor' }))
+    await user.click(screen.getByRole('option', { name: 'Reviewer' }))
+    await user.keyboard('{Escape}')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+        { roles },
+        { roles: { type: 'select', value: roles } },
+    )
+    await user.click(select)
+    await user.click(screen.getByRole('option', { name: 'Editor' }))
+    await user.keyboard('{Escape}')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+        { roles: [roles[1]] },
+        { roles: { type: 'select', value: [roles[1]] } },
+    )
+
+    form.unmount()
+    onSubmit.mockClear()
+    render(
+        <FormBuilder
+            config={config}
+            defaultValues={{ roles: [{ id: 2, name: 'Reviewer' }] }}
+            onSubmit={onSubmit}
+        />,
+    )
+    expect(screen.getByRole('combobox', { name: 'Roles' })).toHaveTextContent('Reviewer')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[0][0].roles).toEqual([{ id: 2, name: 'Reviewer' }])
+})
+
+test('multiple select validates an empty required array', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'select',
+            properties: {
+                label: 'Roles',
+                multiple: true,
+                items: [{ id: 1, name: 'Editor' }],
+                getItemLabel: (item: { id: number; name: string }) => item.name,
+                getItemKey: (item: { id: number; name: string }) => item.id,
+            },
+            rules: { required: 'Choose a role' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const select = screen.getByRole('combobox', { name: 'Roles' })
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(await screen.findByText('Choose a role')).toBeVisible()
+    expect(select).toHaveFocus()
+    await user.click(select)
+    await user.click(screen.getByRole('option', { name: 'Editor' }))
+    await user.keyboard('{Escape}')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { roles: [{ id: 1, name: 'Editor' }] },
+        { roles: { type: 'select', value: [{ id: 1, name: 'Editor' }] } },
+    )
+})
+
+test('multiple select accepts a single value from the hidden input', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [
+        { id: 0, name: 'Editor' },
+        { id: 2, name: 'Reviewer' },
+    ]
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'select',
+            properties: {
+                label: 'Roles',
+                multiple: true,
+                items: roles,
+                getItemLabel: (item: (typeof roles)[number]) => item.name,
+                getItemKey: (item: (typeof roles)[number]) => item.id,
+            },
+        },
+    ])
+    const { container } = render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const input = container.querySelector('input[name="roles"]')
+    expect(input).not.toBeNull()
+    fireEvent.change(input!, { target: { value: '1' } })
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[0][0].roles).toEqual([roles[1]])
 })
 
 test('connects validation, focus, required state and input identity to RHF', async () => {

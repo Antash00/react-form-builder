@@ -89,7 +89,9 @@ export const CheckboxGroupFieldRenderer = <TFieldValues extends FieldValues>({
                                                             : undefined,
                                                     },
                                                 }}
-                                                color={fieldState.error ? 'error' : 'primary'}
+                                                {...(fieldState.error
+                                                    ? { color: 'error' as const }
+                                                    : {})}
                                             />
                                         }
                                     />

@@ -1,8 +1,115 @@
 # React Form Builder MUI
 
-Config-driven form builder for React, TypeScript, Material UI and React Hook Form.
+Most projects have many ordinary forms with the same field, validation, and
+submission wiring. React Form Builder MUI speeds up building those forms: describe
+the fields in a typed config, and the library connects React Hook Form to Material
+UI, renders the inputs, shows validation errors, and infers submitted value types.
 
 > Early development. API is not stable yet.
+
+## Current capabilities
+
+- `FormBuilder` creates a standalone React Hook Form form from `defineConfig(...)`.
+- Field `properties` stay close to MUI props; the library controls form-owned
+  props such as value, change and blur handlers.
+- `rules` connect supported React Hook Form validation to MUI error and required
+  states.
+- `defaultValues` initialize forms for editing existing data.
+- Select and checkbox group fields keep the original item objects in submitted
+  values. `getItemKey` matches saved objects to the current items.
+- The playground is a consumer of the package and contains working examples of
+  every supported field type.
+
+| Field type      | Component      | Submitted value                                     |
+| --------------- | -------------- | --------------------------------------------------- |
+| `text`          | MUI TextField  | `string`, including for `type: 'number'`            |
+| `checkbox`      | MUI Checkbox   | `boolean`                                           |
+| `checkboxGroup` | MUI checkboxes | `TItem[]`                                           |
+| `select`        | MUI Select     | `TItem \| null`, or `TItem[]` with `multiple: true` |
+
+## Example
+
+```tsx
+import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
+
+type Role = { id: number; name: string }
+
+const roles: Role[] = [
+    { id: 1, name: 'Editor' },
+    { id: 2, name: 'Reviewer' },
+]
+
+const config = defineConfig([
+    {
+        accessor: 'name',
+        type: 'text',
+        properties: { label: 'Name', fullWidth: true },
+        rules: { required: 'Enter a name' },
+    },
+    {
+        accessor: 'confirmed',
+        type: 'checkbox',
+        properties: { label: 'I confirm the details' },
+    },
+    {
+        accessor: 'roles',
+        type: 'checkboxGroup',
+        properties: {
+            label: 'Roles',
+            items: roles,
+            getItemLabel: (role: Role) => role.name,
+            getItemKey: (role: Role) => role.id,
+        },
+    },
+    {
+        accessor: 'primaryRole',
+        type: 'select',
+        properties: {
+            label: 'Primary role',
+            emptyLabel: 'No primary role',
+            items: roles,
+            getItemLabel: (role: Role) => role.name,
+            getItemKey: (role: Role) => role.id,
+        },
+    },
+    {
+        accessor: 'additionalRoles',
+        type: 'select',
+        properties: {
+            label: 'Additional roles',
+            multiple: true,
+            items: roles,
+            getItemLabel: (role: Role) => role.name,
+            getItemKey: (role: Role) => role.id,
+        },
+    },
+])
+
+export function UserForm() {
+    return (
+        <FormBuilder
+            config={config}
+            defaultValues={{ primaryRole: roles[0], additionalRoles: [roles[1]] }}
+            onSubmit={(values) => {
+                console.log(values.name, values.confirmed)
+                console.log(values.roles.map((role) => role.name))
+                console.log(values.primaryRole?.name)
+                console.log(values.additionalRoles.map((role) => role.name))
+            }}
+        />
+    )
+}
+```
+
+The submit callback infers `name` as `string`, `confirmed` as `boolean`, `roles`
+and `additionalRoles` as `Role[]`, and `primaryRole` as `Role | null`. Select
+defaults may be different object instances from `items` when their keys match.
+`emptyLabel` adds a clear option to a single select. The optional second submit
+argument contains each field's type and value.
+
+The current package provides the standalone `FormBuilder`. Complex forms can use
+React Hook Form and JSX directly. Rendering configured fields inside an existing
+form context is planned for a later API.
 
 ## Development
 

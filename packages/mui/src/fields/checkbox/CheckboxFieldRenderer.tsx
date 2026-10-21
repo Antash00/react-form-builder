@@ -68,7 +68,7 @@ export const CheckboxFieldRenderer = <TFieldValues extends FieldValues>({
                         }}
                         required={required}
                         checked={field.value}
-                        color={fieldState.error ? 'error' : (config.properties?.color ?? 'primary')}
+                        {...(fieldState.error ? { color: 'error' as const } : {})}
                     />
                 )
 

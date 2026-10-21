@@ -7,6 +7,7 @@ import {
     type CheckboxFieldConfig,
     type CheckboxGroupFieldConfig,
     type InferFormValues,
+    type SelectFieldConfig,
     type TextFieldConfig,
 } from '../'
 
@@ -213,3 +214,122 @@ expectNotAssignable<Properties>({ slotProps: { select: {} } })
 
 const invalidSelect = { select: true }
 expectNotAssignable<Properties>(invalidSelect)
+
+const selectConfig = defineConfig([
+    {
+        accessor: 'primaryRole',
+        type: 'select',
+        properties: {
+            label: 'Primary role',
+            items: roles,
+            getItemLabel: (item: Role) => item.name,
+            getItemKey: (item: Role) => item.id,
+        },
+    },
+])
+declare const selectValues: InferFormValues<typeof selectConfig>
+expectType<Role | null>(selectValues.primaryRole)
+expectNotAssignable<DefaultValues<InferFormValues<typeof selectConfig>>>({
+    primaryRole: { code: 'read' },
+})
+expectType<JSX.Element>(
+    <FormBuilder
+        config={selectConfig}
+        defaultValues={{ primaryRole: roles[0] }}
+        onSubmit={(submitted, result) => {
+            expectType<Role | null>(submitted.primaryRole)
+            expectType<'select'>(result.primaryRole.type)
+            expectType<Role | null>(result.primaryRole.value)
+        }}
+    />,
+)
+expectNotAssignable<SelectFieldConfig<Role>>({
+    accessor: 'primaryRole',
+    type: 'select',
+    properties: {
+        label: 'Primary role',
+        items: roles,
+        getItemLabel: (item: Role & { extra: string }) => item.extra,
+        getItemKey: (item: Role) => item.id,
+    },
+})
+type SelectProperties = SelectFieldConfig<Role>['properties']
+expectAssignable<SelectProperties>({
+    variant: 'filled',
+    disableUnderline: true,
+    label: 'Primary role',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+})
+expectNotAssignable<SelectProperties>({
+    variant: 'outlined',
+    disableUnderline: true,
+    label: 'Primary role',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+})
+expectNotAssignable<SelectProperties>({
+    label: 'Primary role',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+    value: 'outside RHF',
+})
+expectNotAssignable<SelectProperties>({
+    label: 'Primary role',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+    native: true,
+})
+expectNotAssignable<SelectProperties>({
+    label: 'Primary role',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+    slotProps: { input: { value: 'outside RHF' } },
+})
+defineConfig([
+    {
+        accessor: 'primaryRole',
+        type: 'select',
+        properties: {
+            label: 'Primary role',
+            items: roles,
+            // @ts-expect-error callback item must match the items
+            getItemLabel: (item: Role & { extra: string }) => item.extra,
+            getItemKey: (item: Role) => item.id,
+        },
+    },
+])
+
+const multiSelectConfig = defineConfig([
+    {
+        accessor: 'additionalRoles',
+        type: 'select',
+        properties: {
+            label: 'Additional roles',
+            multiple: true,
+            items: roles,
+            getItemLabel: (item: Role) => item.name,
+            getItemKey: (item: Role) => item.id,
+        },
+    },
+])
+declare const multiSelectValues: InferFormValues<typeof multiSelectConfig>
+expectType<Role[]>(multiSelectValues.additionalRoles)
+expectNotAssignable<DefaultValues<InferFormValues<typeof multiSelectConfig>>>({
+    additionalRoles: roles[0],
+})
+expectType<JSX.Element>(
+    <FormBuilder
+        config={multiSelectConfig}
+        defaultValues={{ additionalRoles: [roles[0]] }}
+        onSubmit={(submitted, result) => {
+            expectType<Role[]>(submitted.additionalRoles)
+            expectType<Role[]>(result.additionalRoles.value)
+        }}
+    />,
+)
