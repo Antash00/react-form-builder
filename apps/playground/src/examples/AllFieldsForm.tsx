@@ -30,12 +30,11 @@ const config = defineConfig([
     },
     {
         accessor: 'budget',
-        type: 'text',
+        type: 'number',
         properties: {
             label: 'Budget',
-            type: 'number',
             fullWidth: true,
-            helperText: 'Text field values stay strings, including 0',
+            helperText: 'Numbers submit as numbers; an empty field submits null',
         },
     },
     {
@@ -96,7 +95,11 @@ export const AllFieldsForm = () => {
             <p>Every supported field type in one form. Submit to inspect the inferred values.</p>
             <FormBuilder
                 config={config}
-                defaultValues={{ budget: '0', notes: 'Existing note', additionalRoles: [roles[1]] }}
+                groups={[
+                    { fields: ['name', 'email'], columns: { xs: 1, md: 2 }, gap: 2 },
+                    { fields: ['budget', 'notes'], columns: { xs: 1, md: 2 }, gap: 3 },
+                ]}
+                defaultValues={{ budget: 0, notes: 'Existing note', additionalRoles: [roles[1]] }}
                 onSubmit={(values) => {
                     setSubmitted(
                         JSON.stringify(

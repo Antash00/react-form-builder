@@ -1,13 +1,31 @@
 import type { RegisterOptions } from 'react-hook-form'
 import type { ReactNode } from 'react'
-import type { FormGroupProps, SelectProps } from '@mui/material'
+import type { FormGroupProps, GridProps, SelectProps } from '@mui/material'
 import type { CheckboxFieldProperties, TextFieldProperties } from './inputsProperties'
+
+export type NumberFieldProperties = TextFieldProperties extends infer TProps
+    ? TProps extends unknown
+        ? Omit<TProps, 'type' | 'multiline' | 'rows' | 'minRows' | 'maxRows'> & {
+              type?: never
+              multiline?: never
+              rows?: never
+              minRows?: never
+              maxRows?: never
+          }
+        : never
+    : never
 
 export type BaseFieldConfig<TAccessor extends string = string, TType extends string = string> = {
     accessor: TAccessor
     type: TType
     id?: string
     className?: string
+}
+
+export type FieldGroup<TAccessor extends string = string> = {
+    fields: readonly TAccessor[]
+    columns: GridProps['columns']
+    gap?: GridProps['spacing']
 }
 export type TextFieldConfig<TAccessor extends string = string> = BaseFieldConfig<
     TAccessor,
@@ -16,6 +34,13 @@ export type TextFieldConfig<TAccessor extends string = string> = BaseFieldConfig
     properties?: TextFieldProperties
 
     rules?: Pick<RegisterOptions, 'required' | 'minLength' | 'maxLength' | 'pattern'>
+}
+export type NumberFieldConfig<TAccessor extends string = string> = BaseFieldConfig<
+    TAccessor,
+    'number'
+> & {
+    properties?: NumberFieldProperties
+    rules?: Pick<RegisterOptions, 'required' | 'min' | 'max'>
 }
 export type CheckboxFieldConfig<TAccessor extends string = string> = BaseFieldConfig<
     TAccessor,
@@ -119,6 +144,7 @@ type AnySelectField<TAccessor extends string> = Omit<
 
 export type ItemField<TAccessor extends string = string> =
     | TextFieldConfig<TAccessor>
+    | NumberFieldConfig<TAccessor>
     | CheckboxFieldConfig<TAccessor>
     | AnyCheckboxGroupField<TAccessor>
     | AnySelectField<TAccessor>

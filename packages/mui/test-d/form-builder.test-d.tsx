@@ -7,8 +7,10 @@ import {
     type CheckboxFieldConfig,
     type CheckboxGroupFieldConfig,
     type InferFormValues,
+    type NumberFieldConfig,
     type SelectFieldConfig,
     type TextFieldConfig,
+    type FieldGroup,
 } from '../'
 
 const config = defineConfig([
@@ -21,7 +23,7 @@ const config = defineConfig([
             slotProps: { input: { disableUnderline: true }, htmlInput: { maxLength: 60 } },
         },
     },
-    { accessor: 'amount', type: 'text', properties: { type: 'number' } },
+    { accessor: 'amount', type: 'text', properties: { label: 'Amount as text' } },
 ])
 
 declare const values: InferFormValues<typeof config>
@@ -44,6 +46,61 @@ expectType<JSX.Element>(
 )
 
 expectNotAssignable<DefaultValues<InferFormValues<typeof config>>>({ name: 42 })
+
+expectType<JSX.Element>(
+    <FormBuilder
+        config={config}
+        groups={[{ fields: ['name', 'amount'], columns: { xs: 1, md: 2 }, gap: 2 }]}
+        onSubmit={(submitted) => expectType<string>(submitted.name)}
+    />,
+)
+expectNotAssignable<FieldGroup<'name' | 'amount'>>({ fields: ['missing'], columns: 2 })
+expectNotAssignable<FieldGroup<'name' | 'amount'>>({ fields: ['name'], columns: 'two' })
+expectType<JSX.Element>(
+    <FormBuilder
+        config={config}
+        // @ts-expect-error group fields must exist in config
+        groups={[{ fields: ['missing'], columns: 2 }]}
+        onSubmit={() => {}}
+    />,
+)
+
+const numberConfig = defineConfig([
+    {
+        accessor: 'budget',
+        type: 'number',
+        properties: {
+            label: 'Budget',
+            variant: 'filled',
+            slotProps: { htmlInput: { step: '0.01' } },
+        },
+        rules: { required: 'Enter a budget', min: 0, max: 100 },
+    },
+])
+declare const numberValues: InferFormValues<typeof numberConfig>
+expectType<number | null>(numberValues.budget)
+expectNotAssignable<DefaultValues<InferFormValues<typeof numberConfig>>>({ budget: '42' })
+expectType<JSX.Element>(
+    <FormBuilder
+        config={numberConfig}
+        defaultValues={{ budget: 0 }}
+        onSubmit={(submitted, result) => {
+            expectType<number | null>(submitted.budget)
+            expectType<'number'>(result.budget.type)
+            expectType<number | null>(result.budget.value)
+        }}
+    />,
+)
+type NumberProperties = NonNullable<NumberFieldConfig['properties']>
+expectNotAssignable<NumberProperties>({ type: 'text' })
+expectNotAssignable<NumberProperties>({ multiline: true })
+expectNotAssignable<NumberProperties>({ value: 5 })
+expectNotAssignable<NumberProperties>({ onChange: () => {} })
+expectNotAssignable<NumberFieldConfig>({
+    accessor: 'budget',
+    type: 'number',
+    rules: { pattern: /[0-9]/ },
+})
 
 const checkboxConfig = defineConfig([
     { accessor: 'name', type: 'text' },
@@ -197,6 +254,20 @@ expectNotAssignable<TextFieldConfig>({
 })
 expectNotAssignable<Properties>({ type: 'file' })
 expectNotAssignable<Properties>({ type: 'checkbox' })
+expectNotAssignable<Properties>({ type: 'number' })
+expectNotAssignable<TextFieldConfig>({
+    accessor: 'amount',
+    type: 'text',
+    properties: { type: 'number' },
+})
+defineConfig([
+    {
+        accessor: 'amount',
+        type: 'text',
+        // @ts-expect-error numeric input belongs to the number field
+        properties: { type: 'number' },
+    },
+])
 const invalidOutlined = {
     variant: 'outlined' as const,
     slotProps: { input: { disableUnderline: true } },

@@ -6,6 +6,73 @@ import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
 
 afterEach(cleanup)
 
+test('renders responsive MUI grids without losing ungrouped fields or form values', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        { accessor: 'firstName', type: 'text', properties: { label: 'First name' } },
+        { accessor: 'lastName', type: 'text', properties: { label: 'Last name' } },
+        { accessor: 'email', type: 'text', properties: { label: 'Email' } },
+        { accessor: 'phone', type: 'text', properties: { label: 'Phone' } },
+        { accessor: 'notes', type: 'text', properties: { label: 'Notes' } },
+    ])
+
+    const { container } = render(
+        <FormBuilder
+            config={config}
+            groups={[
+                { fields: ['firstName', 'lastName'], columns: { xs: 1, md: 2 }, gap: 2 },
+                { fields: ['email', 'phone'], columns: { xs: 1, md: 2 }, gap: 3 },
+            ]}
+            onSubmit={onSubmit}
+        />,
+    )
+
+    const grids = container.querySelectorAll('.MuiGrid-container')
+    expect(grids).toHaveLength(3)
+    expect(grids[0]).toHaveClass('MuiGrid-spacing-xs-2')
+    expect(grids[1]).toHaveClass('MuiGrid-spacing-xs-3')
+    expect(grids[0].querySelectorAll('.MuiGrid-root')).toHaveLength(2)
+    expect(grids[1].querySelectorAll('.MuiGrid-root')).toHaveLength(2)
+    expect(grids[2]).toHaveClass('MuiGrid-spacing-xs-2')
+    expect(grids[2].querySelectorAll('.MuiGrid-root')).toHaveLength(1)
+    expect(grids[2]).toContainElement(screen.getByRole('textbox', { name: 'Notes' }))
+    expect(screen.getAllByRole('textbox').map((input) => input.getAttribute('name'))).toEqual([
+        'firstName',
+        'lastName',
+        'email',
+        'phone',
+        'notes',
+    ])
+
+    await user.type(screen.getByRole('textbox', { name: 'First name' }), 'Ada')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { firstName: 'Ada', lastName: '', email: '', phone: '', notes: '' },
+        expect.any(Object),
+    )
+})
+
+test('wraps fields in a single-column MUI grid when groups are omitted', async () => {
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        { accessor: 'firstName', type: 'text', properties: { label: 'First name' } },
+        { accessor: 'lastName', type: 'text', properties: { label: 'Last name' } },
+    ])
+    const { container } = render(<FormBuilder config={config} onSubmit={onSubmit} />)
+
+    const grid = container.querySelector('.MuiGrid-container')
+    expect(grid).not.toBeNull()
+    expect(container.querySelectorAll('.MuiGrid-container')).toHaveLength(1)
+    expect(grid).toHaveClass('MuiGrid-spacing-xs-2')
+    expect(grid?.querySelectorAll(':scope > .MuiGrid-root')).toHaveLength(2)
+    expect(grid).toContainElement(screen.getByRole('textbox', { name: 'First name' }))
+    expect(grid).toContainElement(screen.getByRole('textbox', { name: 'Last name' }))
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith({ firstName: '', lastName: '' }, expect.any(Object))
+})
+
 test('text fields inherit MUI theme defaults and keep explicit field props', async () => {
     const user = userEvent.setup()
     const theme = createTheme({
@@ -585,21 +652,98 @@ test('connects validation, focus, required state and input identity to RHF', asy
     expect(screen.getByText('Your full name')).toBeVisible()
 })
 
-test('preserves string values for number and multiline text fields', async () => {
+test('preserves string values for text and multiline fields', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     const config = defineConfig([
-        { accessor: 'amount', type: 'text', properties: { label: 'Amount', type: 'number' } },
+        { accessor: 'amount', type: 'text', properties: { label: 'Amount as text' } },
         { accessor: 'notes', type: 'text', properties: { label: 'Notes', multiline: true } },
     ])
     render(<FormBuilder config={config} onSubmit={onSubmit} />)
-    await user.type(screen.getByRole('spinbutton', { name: 'Amount' }), '12.5')
+    await user.type(screen.getByRole('textbox', { name: 'Amount as text' }), '12.5')
     await user.type(screen.getByRole('textbox', { name: 'Notes' }), 'First line')
     await user.click(screen.getByRole('button', { name: 'Submit' }))
     expect(onSubmit).toHaveBeenCalledWith(
         { amount: '12.5', notes: 'First line' },
         { amount: { type: 'text', value: '12.5' }, notes: { type: 'text', value: 'First line' } },
     )
+})
+
+test('number field submits null, zero and decimals alongside text fields', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'amount',
+            type: 'number',
+            id: 'amount',
+            properties: { label: 'Amount', helperText: 'Enter an amount' },
+        },
+        { accessor: 'code', type: 'text', properties: { label: 'Code' } },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const amount = screen.getByRole('spinbutton', { name: 'Amount' })
+    const code = screen.getByRole('textbox', { name: 'Code' })
+    expect(amount).toHaveAttribute('id', 'amount')
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[0][0]).toEqual({ amount: null, code: '' })
+
+    await user.type(amount, '0')
+    await user.type(code, '0')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[1][0]).toEqual({ amount: 0, code: '0' })
+
+    await user.clear(amount)
+    await user.type(amount, '12.5')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[2][0]).toEqual({ amount: 12.5, code: '0' })
+
+    await user.clear(amount)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[3][0].amount).toBeNull()
+})
+
+test('number field validates required and range rules while keeping a numeric default', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'amount',
+            type: 'number',
+            properties: { label: 'Amount', helperText: 'Between 0 and 10' },
+            rules: {
+                required: 'Enter an amount',
+                min: { value: 0, message: 'Too small' },
+                max: 10,
+            },
+        },
+    ])
+    const form = render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const amount = screen.getByRole('spinbutton', { name: /Amount/ })
+    expect(amount).toBeRequired()
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(await screen.findByText('Enter an amount')).toBeVisible()
+    expect(amount).toHaveFocus()
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    await user.type(amount, '-1')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(await screen.findByText('Too small')).toBeVisible()
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    await user.clear(amount)
+    await user.type(amount, '0')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[0][0].amount).toBe(0)
+    expect(screen.getByText('Between 0 and 10')).toBeVisible()
+
+    form.unmount()
+    onSubmit.mockClear()
+    render(<FormBuilder config={config} defaultValues={{ amount: 5 }} onSubmit={onSubmit} />)
+    expect(screen.getByRole('spinbutton', { name: /Amount/ })).toHaveValue(5)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith({ amount: 5 }, { amount: { type: 'number', value: 5 } })
 })
 
 test('keeps safe MUI slot props and accessibility links', () => {

@@ -15,6 +15,7 @@ UI, renders the inputs, shows validation errors, and infers submitted value type
 - `rules` connect supported React Hook Form validation to MUI error and required
   states.
 - `defaultValues` initialize forms for editing existing data.
+- Optional `groups` arrange selected fields with MUI Grid. Other fields follow in config order.
 - Select and checkbox group fields keep the original item objects in submitted
   values. `getItemKey` matches saved objects to the current items.
 - The playground is a consumer of the package and contains working examples of
@@ -22,7 +23,8 @@ UI, renders the inputs, shows validation errors, and infers submitted value type
 
 | Field type      | Component      | Submitted value                                     |
 | --------------- | -------------- | --------------------------------------------------- |
-| `text`          | MUI TextField  | `string`, including for `type: 'number'`            |
+| `text`          | MUI TextField  | `string`                                            |
+| `number`        | MUI TextField  | `number \| null` (`null` when empty)                |
 | `checkbox`      | MUI Checkbox   | `boolean`                                           |
 | `checkboxGroup` | MUI checkboxes | `TItem[]`                                           |
 | `select`        | MUI Select     | `TItem \| null`, or `TItem[]` with `multiple: true` |
@@ -106,6 +108,19 @@ and `additionalRoles` as `Role[]`, and `primaryRole` as `Role | null`. Select
 defaults may be different object instances from `items` when their keys match.
 `emptyLabel` adds a clear option to a single select. The optional second submit
 argument contains each field's type and value.
+
+For a responsive layout, pass groups of field accessors to `FormBuilder`:
+
+```tsx
+groups={[
+    { fields: ['firstName', 'lastName'], columns: { xs: 1, md: 2 }, gap: 2 },
+    { fields: ['email', 'phone'], columns: { xs: 1, md: 2 }, gap: 3 },
+]}
+```
+
+Each group is a MUI Grid container; `columns` and `gap` use the Grid's column and
+spacing props. A field can occur in only one group. Fields omitted from groups are
+rendered after the groups in their config order.
 
 The current package provides the standalone `FormBuilder`. Complex forms can use
 React Hook Form and JSX directly. Rendering configured fields inside an existing

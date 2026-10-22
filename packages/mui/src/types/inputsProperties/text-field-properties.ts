@@ -54,7 +54,7 @@ type ControlledInputProps =
     | 'minRows'
     | 'maxRows'
 
-type TextInputType = 'text' | 'email' | 'password' | 'search' | 'tel' | 'url' | 'number'
+type TextInputType = 'text' | 'email' | 'password' | 'search' | 'tel' | 'url'
 
 // MUI's native slot has an arbitrary string/any index signature. Derive this slot
 // from React's native attributes so forbidden props cannot bypass the contract.
