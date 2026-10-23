@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
 import type { CheckboxFieldConfig } from '../../types'
+import { hasSupportingText, isRequired } from '../../helpers'
 import {
     Checkbox,
     FormControl,
@@ -18,9 +19,9 @@ export const CheckboxFieldRenderer = <TFieldValues extends FieldValues>({
     control,
 }: CheckboxFieldRendererProps<TFieldValues>) => {
     const name = config.accessor as FieldPath<TFieldValues>
-    const requiredRule = config.rules?.required
-    const required = typeof requiredRule === 'object' ? requiredRule.value : Boolean(requiredRule)
-    const helperTextId = useId()
+    const required = isRequired(config.rules?.required)
+    const generatedId = useId()
+    const helperTextId = `${config.id ?? generatedId}-helper-text`
     const { label, helperText, ...checkboxProperties } = config.properties ?? {}
     // The config type excludes RHF-owned props; only label and helperText are adapter additions.
     const muiProperties = checkboxProperties as CheckboxProps
@@ -29,14 +30,10 @@ export const CheckboxFieldRenderer = <TFieldValues extends FieldValues>({
         <Controller
             name={name}
             control={control}
-            rules={config.rules}
+            rules={config.properties?.disabled ? undefined : config.rules}
             render={({ field, fieldState }) => {
                 const supportingText = fieldState.error?.message ?? helperText
-                const hasSupportingText =
-                    supportingText !== undefined &&
-                    supportingText !== null &&
-                    supportingText !== false &&
-                    supportingText !== ''
+                const showSupportingText = hasSupportingText(supportingText)
                 const checkbox = (
                     <Checkbox
                         {...muiProperties}
@@ -53,7 +50,7 @@ export const CheckboxFieldRenderer = <TFieldValues extends FieldValues>({
                                         : inputProps
                                 const describedBy = [
                                     resolvedInputProps?.['aria-describedby'],
-                                    hasSupportingText ? helperTextId : undefined,
+                                    showSupportingText ? helperTextId : undefined,
                                 ]
                                     .filter(Boolean)
                                     .join(' ')
@@ -88,7 +85,7 @@ export const CheckboxFieldRenderer = <TFieldValues extends FieldValues>({
                                 required={required}
                             />
                         )}
-                        {hasSupportingText && (
+                        {showSupportingText && (
                             <FormHelperText id={helperTextId}>{supportingText}</FormHelperText>
                         )}
                     </FormControl>

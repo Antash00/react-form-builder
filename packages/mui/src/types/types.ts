@@ -1,6 +1,12 @@
 import type { RegisterOptions } from 'react-hook-form'
 import type { ReactNode } from 'react'
-import type { FormGroupProps, GridProps, SelectProps } from '@mui/material'
+import type {
+    AutocompleteProps,
+    FormGroupProps,
+    GridProps,
+    RadioGroupProps,
+    SelectProps,
+} from '@mui/material'
 import type { CheckboxFieldProperties, TextFieldProperties } from './inputsProperties'
 
 export type NumberFieldProperties = TextFieldProperties extends infer TProps
@@ -68,6 +74,34 @@ export type CheckboxGroupFieldConfig<
     rules?: Pick<RegisterOptions, 'required'>
 }
 
+export type RadioGroupFieldConfig<
+    TItem = unknown,
+    TAccessor extends string = string,
+> = BaseFieldConfig<TAccessor, 'radioGroup'> & {
+    properties: Omit<
+        RadioGroupProps,
+        | 'children'
+        | 'value'
+        | 'defaultValue'
+        | 'onChange'
+        | 'onBlur'
+        | 'name'
+        | 'ref'
+        | 'id'
+        | 'className'
+        | 'aria-labelledby'
+        | 'aria-describedby'
+    > & {
+        items: readonly TItem[]
+        label: ReactNode
+        helperText?: ReactNode
+        disabled?: boolean
+        getItemLabel: (item: TItem) => ReactNode
+        getItemKey: (item: TItem) => string | number
+    }
+    rules?: Pick<RegisterOptions, 'required'>
+}
+
 type ControlledSelectProps =
     | 'children'
     | 'value'
@@ -118,6 +152,34 @@ export type SelectFieldConfig<TItem = unknown, TAccessor extends string = string
     rules?: Pick<RegisterOptions, 'required'>
 }
 
+type ControlledAutocompleteProps =
+    | 'value'
+    | 'defaultValue'
+    | 'onChange'
+    | 'onBlur'
+    | 'renderInput'
+    | 'freeSolo'
+    | 'disableClearable'
+    | 'id'
+    | 'className'
+
+export type AutocompleteFieldConfig<
+    TItem = unknown,
+    TAccessor extends string = string,
+> = BaseFieldConfig<TAccessor, 'autocomplete'> & {
+    properties: Omit<
+        AutocompleteProps<TItem, boolean, false, false>,
+        ControlledAutocompleteProps | 'getOptionLabel'
+    > & {
+        [TKey in ControlledAutocompleteProps]?: never
+    } & {
+        label: string
+        helperText?: ReactNode
+        getOptionLabel: (option: TItem) => string
+    }
+    rules?: Pick<RegisterOptions, 'required'>
+}
+
 // The broad union accepts each group's own item type; defineConfig checks its callbacks against items.
 type AnyCheckboxGroupField<TAccessor extends string> = Omit<
     CheckboxGroupFieldConfig<unknown, TAccessor>,
@@ -125,6 +187,19 @@ type AnyCheckboxGroupField<TAccessor extends string> = Omit<
 > & {
     properties: Omit<
         CheckboxGroupFieldConfig<unknown>['properties'],
+        'getItemLabel' | 'getItemKey'
+    > & {
+        getItemLabel(item: unknown): ReactNode
+        getItemKey(item: unknown): string | number
+    }
+}
+
+type AnyRadioGroupField<TAccessor extends string> = Omit<
+    RadioGroupFieldConfig<unknown, TAccessor>,
+    'properties'
+> & {
+    properties: Omit<
+        RadioGroupFieldConfig<unknown>['properties'],
         'getItemLabel' | 'getItemKey'
     > & {
         getItemLabel(item: unknown): ReactNode
@@ -142,9 +217,25 @@ type AnySelectField<TAccessor extends string> = Omit<
     }
 }
 
+type AnyAutocompleteField<TAccessor extends string> = Omit<
+    AutocompleteFieldConfig<unknown, TAccessor>,
+    'properties'
+> & {
+    properties: Omit<
+        AutocompleteFieldConfig<unknown>['properties'],
+        'getOptionLabel' | 'getOptionKey' | 'isOptionEqualToValue'
+    > & {
+        getOptionLabel(option: unknown): string
+        getOptionKey?(option: unknown): string | number
+        isOptionEqualToValue?(option: unknown, value: unknown): boolean
+    }
+}
+
 export type ItemField<TAccessor extends string = string> =
     | TextFieldConfig<TAccessor>
     | NumberFieldConfig<TAccessor>
     | CheckboxFieldConfig<TAccessor>
     | AnyCheckboxGroupField<TAccessor>
+    | AnyRadioGroupField<TAccessor>
     | AnySelectField<TAccessor>
+    | AnyAutocompleteField<TAccessor>

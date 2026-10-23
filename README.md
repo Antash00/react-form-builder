@@ -16,18 +16,21 @@ UI, renders the inputs, shows validation errors, and infers submitted value type
   states.
 - `defaultValues` initialize forms for editing existing data.
 - Optional `groups` arrange selected fields with MUI Grid. Other fields follow in config order.
-- Select and checkbox group fields keep the original item objects in submitted
-  values. `getItemKey` matches saved objects to the current items.
+- Select, radio group, checkbox group, and autocomplete fields keep the original
+  item objects in submitted values. `getItemKey` matches saved objects to current
+  items in select and group fields.
 - The playground is a consumer of the package and contains working examples of
   every supported field type.
 
-| Field type      | Component      | Submitted value                                     |
-| --------------- | -------------- | --------------------------------------------------- |
-| `text`          | MUI TextField  | `string`                                            |
-| `number`        | MUI TextField  | `number \| null` (`null` when empty)                |
-| `checkbox`      | MUI Checkbox   | `boolean`                                           |
-| `checkboxGroup` | MUI checkboxes | `TItem[]`                                           |
-| `select`        | MUI Select     | `TItem \| null`, or `TItem[]` with `multiple: true` |
+| Field type      | Component        | Submitted value                                     |
+| --------------- | ---------------- | --------------------------------------------------- |
+| `text`          | MUI TextField    | `string`                                            |
+| `number`        | MUI TextField    | `number \| null` (`null` when empty)                |
+| `checkbox`      | MUI Checkbox     | `boolean`                                           |
+| `checkboxGroup` | MUI checkboxes   | `TItem[]`                                           |
+| `radioGroup`    | MUI RadioGroup   | `TItem \| null`                                     |
+| `select`        | MUI Select       | `TItem \| null`, or `TItem[]` with `multiple: true` |
+| `autocomplete`  | MUI Autocomplete | `TItem \| null`, or `TItem[]` with `multiple: true` |
 
 ## Example
 
@@ -85,6 +88,27 @@ const config = defineConfig([
             getItemKey: (role: Role) => role.id,
         },
     },
+    {
+        accessor: 'approvalRole',
+        type: 'radioGroup',
+        properties: {
+            label: 'Approval role',
+            row: true,
+            items: roles,
+            getItemLabel: (role: Role) => role.name,
+            getItemKey: (role: Role) => role.id,
+        },
+    },
+    {
+        accessor: 'searchRole',
+        type: 'autocomplete',
+        properties: {
+            label: 'Search for a role',
+            options: roles,
+            getOptionLabel: (role: Role) => role.name,
+            isOptionEqualToValue: (option: Role, value: Role) => option.id === value.id,
+        },
+    },
 ])
 
 export function UserForm() {
@@ -97,6 +121,7 @@ export function UserForm() {
                 console.log(values.roles.map((role) => role.name))
                 console.log(values.primaryRole?.name)
                 console.log(values.additionalRoles.map((role) => role.name))
+                console.log(values.approvalRole?.name, values.searchRole?.name)
             }}
         />
     )
@@ -104,10 +129,12 @@ export function UserForm() {
 ```
 
 The submit callback infers `name` as `string`, `confirmed` as `boolean`, `roles`
-and `additionalRoles` as `Role[]`, and `primaryRole` as `Role | null`. Select
-defaults may be different object instances from `items` when their keys match.
-`emptyLabel` adds a clear option to a single select. The optional second submit
-argument contains each field's type and value.
+and `additionalRoles` as `Role[]`, and `primaryRole`, `approvalRole`, and
+`searchRole` as `Role | null`. Select and radio defaults may be different object
+instances from `items` when their keys match. For autocomplete, pass
+`isOptionEqualToValue` when saved values may be different instances from
+`options`. `emptyLabel` adds a clear option to a single select. The optional
+second submit argument contains each field's type and value.
 
 For a responsive layout, pass groups of field accessors to `FormBuilder`:
 

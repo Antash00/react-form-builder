@@ -1,6 +1,7 @@
 import { TextField } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
 import type { NumberFieldConfig } from '../../types'
+import { isRequired } from '../../helpers'
 
 type NumberFieldRendererProps<TFieldValues extends FieldValues> = {
     config: NumberFieldConfig
@@ -12,14 +13,13 @@ export const NumberFieldRenderer = <TFieldValues extends FieldValues>({
     control,
 }: NumberFieldRendererProps<TFieldValues>) => {
     const name = config.accessor as FieldPath<TFieldValues>
-    const requiredRule = config.rules?.required
-    const required = typeof requiredRule === 'object' ? requiredRule.value : Boolean(requiredRule)
+    const required = isRequired(config.rules?.required)
 
     return (
         <Controller
             name={name}
             control={control}
-            rules={config.rules}
+            rules={config.properties?.disabled ? undefined : config.rules}
             render={({ field, fieldState }) => (
                 <TextField
                     {...config.properties}
@@ -35,7 +35,7 @@ export const NumberFieldRenderer = <TFieldValues extends FieldValues>({
                     inputRef={field.ref}
                     required={required}
                     value={field.value ?? ''}
-                    error={Boolean(fieldState.error)}
+                    error={fieldState.invalid}
                     helperText={fieldState.error?.message ?? config.properties?.helperText}
                 />
             )}

@@ -6,6 +6,273 @@ import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
 
 afterEach(cleanup)
 
+test('disabled basic fields skip required validation and keep their initial values', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'name',
+            type: 'text',
+            properties: { label: 'Name', disabled: true },
+            rules: { required: 'Enter a name' },
+        },
+        {
+            accessor: 'amount',
+            type: 'number',
+            properties: { label: 'Amount', disabled: true },
+            rules: { required: 'Enter an amount' },
+        },
+        {
+            accessor: 'confirmed',
+            type: 'checkbox',
+            properties: { label: 'Confirmed', disabled: true },
+            rules: { required: 'Confirm' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+
+    expect(screen.getByRole('textbox', { name: 'Name' })).toBeDisabled()
+    expect(screen.getByRole('spinbutton', { name: 'Amount' })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: /Confirmed/ })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { name: '', amount: null, confirmed: false },
+        {
+            name: { type: 'text', value: '' },
+            amount: { type: 'number', value: null },
+            confirmed: { type: 'checkbox', value: false },
+        },
+    )
+})
+
+test('fields with separate helper text derive its id from the configured id', () => {
+    const items = [{ id: 1, name: 'Editor' }]
+    const config = defineConfig([
+        {
+            accessor: 'confirmed',
+            type: 'checkbox',
+            id: 'confirmed',
+            properties: { label: 'Confirmed', helperText: 'Confirmation help' },
+        },
+        {
+            accessor: 'roles',
+            type: 'checkboxGroup',
+            id: 'roles',
+            properties: {
+                label: 'Roles',
+                helperText: 'Roles help',
+                items,
+                getItemLabel: (item: (typeof items)[number]) => item.name,
+                getItemKey: (item: (typeof items)[number]) => item.id,
+            },
+        },
+        {
+            accessor: 'radioRole',
+            type: 'radioGroup',
+            id: 'radio-role',
+            properties: {
+                label: 'Radio role',
+                helperText: 'Radio help',
+                items,
+                getItemLabel: (item: (typeof items)[number]) => item.name,
+                getItemKey: (item: (typeof items)[number]) => item.id,
+            },
+        },
+        {
+            accessor: 'primaryRole',
+            type: 'select',
+            id: 'primary-role',
+            properties: {
+                label: 'Primary role',
+                helperText: 'Select help',
+                items,
+                getItemLabel: (item: (typeof items)[number]) => item.name,
+                getItemKey: (item: (typeof items)[number]) => item.id,
+            },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={() => {}} />)
+
+    expect(screen.getByText('Confirmation help')).toHaveAttribute('id', 'confirmed-helper-text')
+    expect(screen.getByText('Roles help')).toHaveAttribute('id', 'roles-helper-text')
+    expect(screen.getByText('Radio help')).toHaveAttribute('id', 'radio-role-helper-text')
+    expect(screen.getByText('Select help')).toHaveAttribute('id', 'primary-role-helper-text')
+    expect(screen.getByRole('checkbox', { name: 'Confirmed' })).toHaveAttribute(
+        'aria-describedby',
+        'confirmed-helper-text',
+    )
+    expect(screen.getByRole('checkbox', { name: 'Editor' })).toHaveAttribute(
+        'aria-describedby',
+        'roles-helper-text',
+    )
+    expect(screen.getByRole('radiogroup', { name: 'Radio role' })).toHaveAttribute(
+        'aria-describedby',
+        'radio-role-helper-text',
+    )
+    expect(screen.getByRole('combobox', { name: 'Primary role' })).toHaveAttribute(
+        'aria-describedby',
+        'primary-role-helper-text',
+    )
+})
+
+test('radio group validates, selects and resets a domain object', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [
+        { id: 0, name: 'Editor' },
+        { id: 2, name: 'Reviewer' },
+    ]
+    const config = defineConfig([
+        {
+            accessor: 'role',
+            type: 'radioGroup',
+            id: 'role-group',
+            properties: {
+                label: 'Role',
+                helperText: 'Choose one role',
+                row: true,
+                items: roles,
+                getItemLabel: (item: (typeof roles)[number]) => item.name,
+                getItemKey: (item: (typeof roles)[number]) => item.id,
+            },
+            rules: { required: 'Select a role' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const editor = screen.getByRole('radio', { name: 'Editor' })
+    const reviewer = screen.getByRole('radio', { name: 'Reviewer' })
+    expect(editor).not.toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    const error = await screen.findByText('Select a role')
+    expect(editor).toHaveFocus()
+    expect(screen.getByRole('radiogroup', { name: 'Role' })).toHaveAttribute(
+        'aria-describedby',
+        error.id,
+    )
+    await user.click(editor)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenLastCalledWith(
+        { role: roles[0] },
+        { role: { type: 'radioGroup', value: roles[0] } },
+    )
+    expect(screen.getByText('Choose one role')).toBeVisible()
+    await user.click(reviewer)
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls.at(-1)?.[0].role).toEqual(roles[1])
+    await user.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(editor).not.toBeChecked()
+    expect(reviewer).not.toBeChecked()
+})
+
+test('radio group matches a saved object by key and skips validation when disabled', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [{ id: 0, name: 'Editor' }]
+    const config = defineConfig([
+        {
+            accessor: 'role',
+            type: 'radioGroup',
+            properties: {
+                label: 'Role',
+                disabled: true,
+                items: roles,
+                getItemLabel: (item: (typeof roles)[number]) => item.name,
+                getItemKey: (item: (typeof roles)[number]) => item.id,
+            },
+            rules: { required: 'Select a role' },
+        },
+    ])
+    render(
+        <FormBuilder
+            config={config}
+            defaultValues={{ role: { id: 0, name: 'Editor' } }}
+            onSubmit={onSubmit}
+        />,
+    )
+    expect(screen.getByRole('radio', { name: 'Editor' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Editor' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[0][0].role).toEqual({ id: 0, name: 'Editor' })
+})
+
+test('autocomplete selects, clears, validates and resets a domain object', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [
+        { id: 1, name: 'Editor' },
+        { id: 2, name: 'Reviewer' },
+    ]
+    const config = defineConfig([
+        {
+            accessor: 'role',
+            type: 'autocomplete',
+            id: 'role-search',
+            properties: {
+                label: 'Role search',
+                helperText: 'Choose a role',
+                options: roles,
+                getOptionLabel: (role: (typeof roles)[number]) => role.name,
+            },
+            rules: { required: 'Role is required' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const input = screen.getByRole('combobox', { name: /Role search/ })
+
+    expect(input).toHaveAttribute('id', 'role-search')
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(await screen.findByText('Role is required')).toBeVisible()
+    expect(input).toHaveFocus()
+    await user.type(input, 'Rev')
+    await user.click(screen.getByRole('option', { name: 'Reviewer' }))
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { role: roles[1] },
+        { role: { type: 'autocomplete', value: roles[1] } },
+    )
+    expect(screen.getByText('Choose a role')).toBeVisible()
+
+    await user.click(screen.getByTitle('Clear'))
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(screen.getByText('Role is required')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(input).toHaveValue('')
+})
+
+test('multiple autocomplete keeps arrays of selected objects and default values', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const roles = [
+        { id: 1, name: 'Editor' },
+        { id: 2, name: 'Reviewer' },
+    ]
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'autocomplete',
+            properties: {
+                label: 'Roles search',
+                multiple: true,
+                options: roles,
+                getOptionLabel: (role: (typeof roles)[number]) => role.name,
+            },
+        },
+    ])
+    render(
+        <FormBuilder config={config} defaultValues={{ roles: [roles[0]] }} onSubmit={onSubmit} />,
+    )
+    expect(screen.getByText('Editor')).toBeVisible()
+    const input = screen.getByRole('combobox', { name: 'Roles search' })
+    await user.type(input, 'Rev')
+    await user.click(screen.getByRole('option', { name: 'Reviewer' }))
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { roles },
+        { roles: { type: 'autocomplete', value: roles } },
+    )
+})
+
 test('renders responsive MUI grids without losing ungrouped fields or form values', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()

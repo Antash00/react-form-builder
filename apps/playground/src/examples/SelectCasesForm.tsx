@@ -7,6 +7,15 @@ const teams: Team[] = [
     { id: 0, name: 'Operations' },
     { id: 1, name: 'Design' },
     { id: 2, name: 'Engineering' },
+    { id: 3, name: 'Product' },
+    { id: 4, name: 'Data' },
+    { id: 5, name: 'Security' },
+    { id: 6, name: 'Finance' },
+    { id: 7, name: 'People' },
+    { id: 8, name: 'Marketing' },
+    { id: 9, name: 'Sales' },
+    { id: 10, name: 'Support' },
+    { id: 11, name: 'Legal' },
 ]
 
 const config = defineConfig([
@@ -54,7 +63,8 @@ export const SelectCasesForm = () => {
                     reviewer: { id: 0, name: 'Operations' },
                     teams: [{ id: 1, name: 'Design' }],
                 }}
-                onSubmit={(values) => {
+                onSubmit={(values, result) => {
+                    console.log('Select cases submit', { values, result })
                     setSubmitted({
                         reviewer: values.reviewer?.name ?? 'None',
                         teams: values.teams.map((team) => team.name),

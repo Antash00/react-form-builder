@@ -6,6 +6,8 @@ import { CheckboxFieldRenderer } from '../fields/checkbox'
 import { CheckboxGroupFieldRenderer } from '../fields/checkbox-group'
 import { SelectFieldRenderer } from '../fields/select'
 import { NumberFieldRenderer } from '../fields/number'
+import { AutocompleteFieldRenderer } from '../fields/autocomplete'
+import { RadioGroupFieldRenderer } from '../fields/radio-group'
 import Grid from '@mui/material/Grid'
 import { Button, Stack } from '@mui/material'
 
@@ -40,7 +42,11 @@ function buildInitialValues<TConfig extends readonly ItemField[]>(
             case 'checkboxGroup':
                 initialValues[field.accessor] = Array.isArray(value) ? value : []
                 break
+            case 'radioGroup':
+                initialValues[field.accessor] = value ?? null
+                break
             case 'select':
+            case 'autocomplete':
                 initialValues[field.accessor] = field.properties.multiple
                     ? Array.isArray(value)
                         ? value
@@ -106,9 +112,25 @@ export const FormBuilder = <const TConfig extends readonly ItemField[]>({
                         control={control}
                     />
                 )
+            case 'radioGroup':
+                return (
+                    <RadioGroupFieldRenderer<FormValues>
+                        key={field.accessor}
+                        config={field}
+                        control={control}
+                    />
+                )
             case 'select':
                 return (
                     <SelectFieldRenderer<FormValues>
+                        key={field.accessor}
+                        config={field}
+                        control={control}
+                    />
+                )
+            case 'autocomplete':
+                return (
+                    <AutocompleteFieldRenderer<FormValues>
                         key={field.accessor}
                         config={field}
                         control={control}

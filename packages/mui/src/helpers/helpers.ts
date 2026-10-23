@@ -1,19 +1,27 @@
 import type {
+    AutocompleteFieldConfig,
     CheckboxGroupFieldConfig,
     InferFormResult,
     InferFormValues,
     ItemField,
+    RadioGroupFieldConfig,
     SelectFieldConfig,
 } from '../types'
+import type { RegisterOptions } from 'react-hook-form'
+import type { ReactNode } from 'react'
 
 type ValidateSelectableItems<TField> = TField extends {
-    type: 'checkboxGroup' | 'select'
+    type: 'checkboxGroup' | 'radioGroup' | 'select'
     properties: { items: readonly (infer TItem)[] }
 }
     ? TField extends { type: 'select' }
         ? SelectFieldConfig<TItem>
-        : CheckboxGroupFieldConfig<TItem>
-    : TField
+        : TField extends { type: 'radioGroup' }
+          ? RadioGroupFieldConfig<TItem>
+          : CheckboxGroupFieldConfig<TItem>
+    : TField extends { type: 'autocomplete'; properties: { options: readonly (infer TItem)[] } }
+      ? AutocompleteFieldConfig<TItem>
+      : TField
 
 export const defineConfig = <const TConfig extends readonly ItemField[]>(
     config: TConfig & {
@@ -55,3 +63,9 @@ export function assertValidAccessors(config: readonly ItemField[]): void {
         seen.add(accessor)
     }
 }
+
+export const isRequired = (rule: RegisterOptions['required']): boolean =>
+    typeof rule === 'object' ? Boolean(rule.value) : Boolean(rule)
+
+export const hasSupportingText = (text: ReactNode): boolean =>
+    text != null && text !== false && text !== ''

@@ -9,6 +9,7 @@ import {
 } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
 import type { CheckboxGroupFieldConfig } from '../../types'
+import { hasSupportingText, isRequired } from '../../helpers'
 
 type CheckboxGroupFieldRendererProps<TFieldValues extends FieldValues> = {
     config: CheckboxGroupFieldConfig
@@ -23,11 +24,10 @@ export const CheckboxGroupFieldRenderer = <TFieldValues extends FieldValues>({
     const name = config.accessor as FieldPath<TFieldValues>
     const generatedLabelId = useId()
     const labelId = config.id ?? generatedLabelId
-    const helperTextId = useId()
+    const helperTextId = `${labelId}-helper-text`
     const { items, label, helperText, disabled, getItemLabel, getItemKey, ...groupProps } =
         config.properties
-    const requiredRule = config.rules?.required
-    const required = typeof requiredRule === 'object' ? requiredRule.value : Boolean(requiredRule)
+    const required = isRequired(config.rules?.required)
 
     return (
         <Controller
@@ -36,11 +36,7 @@ export const CheckboxGroupFieldRenderer = <TFieldValues extends FieldValues>({
             rules={disabled ? undefined : config.rules}
             render={({ field, fieldState }) => {
                 const supportingText = fieldState.error?.message ?? helperText
-                const hasSupportingText =
-                    supportingText !== undefined &&
-                    supportingText !== null &&
-                    supportingText !== false &&
-                    supportingText !== ''
+                const showSupportingText = hasSupportingText(supportingText)
 
                 return (
                     <FormControl
@@ -84,7 +80,7 @@ export const CheckboxGroupFieldRenderer = <TFieldValues extends FieldValues>({
                                                     input: {
                                                         ref: index === 0 ? field.ref : undefined,
                                                         'aria-invalid': fieldState.invalid,
-                                                        'aria-describedby': hasSupportingText
+                                                        'aria-describedby': showSupportingText
                                                             ? helperTextId
                                                             : undefined,
                                                     },
@@ -98,7 +94,7 @@ export const CheckboxGroupFieldRenderer = <TFieldValues extends FieldValues>({
                                 )
                             })}
                         </FormGroup>
-                        {hasSupportingText && (
+                        {showSupportingText && (
                             <FormHelperText id={helperTextId}>{supportingText}</FormHelperText>
                         )}
                     </FormControl>

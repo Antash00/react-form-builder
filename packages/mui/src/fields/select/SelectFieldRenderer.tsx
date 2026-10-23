@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
 import type { SelectFieldConfig } from '../../types'
+import { hasSupportingText, isRequired } from '../../helpers'
 
 type SelectFieldRendererProps<TFieldValues extends FieldValues> = {
     config: SelectFieldConfig
@@ -28,8 +29,7 @@ export const SelectFieldRenderer = <TFieldValues extends FieldValues>({
         'aria-describedby': externalDescription,
         ...selectProps
     } = config.properties
-    const requiredRule = config.rules?.required
-    const required = typeof requiredRule === 'object' ? requiredRule.value : Boolean(requiredRule)
+    const required = isRequired(config.rules?.required)
 
     return (
         <Controller
@@ -49,10 +49,9 @@ export const SelectFieldRenderer = <TFieldValues extends FieldValues>({
                 )
                 const value = multiple ? selectedIndices : (selectedIndices[0] ?? '')
                 const supportingText = fieldState.error?.message ?? helperText
-                const hasSupportingText =
-                    supportingText != null && supportingText !== false && supportingText !== ''
+                const showSupportingText = hasSupportingText(supportingText)
                 const describedBy =
-                    [externalDescription, hasSupportingText && helperTextId]
+                    [externalDescription, showSupportingText && helperTextId]
                         .filter(Boolean)
                         .join(' ') || undefined
 
@@ -111,7 +110,7 @@ export const SelectFieldRenderer = <TFieldValues extends FieldValues>({
                                 </MenuItem>
                             ))}
                         </Select>
-                        {hasSupportingText && (
+                        {showSupportingText && (
                             <FormHelperText id={helperTextId}>{supportingText}</FormHelperText>
                         )}
                     </FormControl>

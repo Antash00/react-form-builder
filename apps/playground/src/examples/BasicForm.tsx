@@ -5,6 +5,14 @@ type Role = { id: number; name: string }
 const roles: Role[] = [
     { id: 1, name: 'Editor' },
     { id: 2, name: 'Reviewer' },
+    { id: 3, name: 'Publisher' },
+    { id: 4, name: 'Translator' },
+    { id: 5, name: 'Analyst' },
+    { id: 6, name: 'Designer' },
+    { id: 7, name: 'Support' },
+    { id: 8, name: 'Auditor' },
+    { id: 9, name: 'Administrator' },
+    { id: 10, name: 'Approver' },
 ]
 
 const config = defineConfig([
@@ -87,12 +95,12 @@ export const BasicForm = () => {
         <>
             <FormBuilder
                 config={config}
-                onSubmit={(values) => {
+                onSubmit={(values, result) => {
+                    console.log('Basic form submit', { values, result })
                     setSubmittedName(values.name)
                     setSubmittedRoles(values.roles.map((role) => role.name))
                     setSubmittedPrimaryRole(values.primaryRole?.name ?? null)
                     setSubmittedAdditionalRoles(values.additionalRoles.map((role) => role.name))
-                    console.log(values)
                 }}
             />
             {submittedName !== null && <output aria-label="Submitted name">{submittedName}</output>}

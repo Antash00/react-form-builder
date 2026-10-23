@@ -6,9 +6,11 @@ import {
     FormBuilder,
     type CheckboxFieldConfig,
     type CheckboxGroupFieldConfig,
+    type RadioGroupFieldConfig,
     type InferFormValues,
     type NumberFieldConfig,
     type SelectFieldConfig,
+    type AutocompleteFieldConfig,
     type TextFieldConfig,
     type FieldGroup,
 } from '../'
@@ -241,6 +243,68 @@ defineConfig([
 ])
 
 type Properties = NonNullable<TextFieldConfig['properties']>
+
+const radioConfig = defineConfig([
+    {
+        accessor: 'primaryRole',
+        type: 'radioGroup',
+        properties: {
+            label: 'Primary role',
+            row: true,
+            items: roles,
+            getItemLabel: (item: Role) => item.name,
+            getItemKey: (item: Role) => item.id,
+        },
+        rules: { required: 'Choose a role' },
+    },
+])
+declare const radioValues: InferFormValues<typeof radioConfig>
+expectType<Role | null>(radioValues.primaryRole)
+expectNotAssignable<DefaultValues<InferFormValues<typeof radioConfig>>>({
+    primaryRole: { code: 'read' },
+})
+expectType<JSX.Element>(
+    <FormBuilder
+        config={radioConfig}
+        defaultValues={{ primaryRole: roles[0] }}
+        onSubmit={(submitted, result) => {
+            expectType<Role | null>(submitted.primaryRole)
+            expectType<'radioGroup'>(result.primaryRole.type)
+            expectType<Role | null>(result.primaryRole.value)
+        }}
+    />,
+)
+expectNotAssignable<RadioGroupFieldConfig<Role>>({
+    accessor: 'primaryRole',
+    type: 'radioGroup',
+    properties: {
+        label: 'Primary role',
+        items: roles,
+        getItemLabel: (item: Role & { extra: string }) => item.extra,
+        getItemKey: (item: Role) => item.id,
+    },
+})
+expectNotAssignable<RadioGroupFieldConfig<Role>['properties']>({
+    label: 'Primary role',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+    value: '1',
+})
+defineConfig([
+    {
+        accessor: 'primaryRole',
+        type: 'radioGroup',
+        properties: {
+            label: 'Primary role',
+            items: roles,
+            // @ts-expect-error callback item cannot require properties absent from items
+            getItemLabel: (item: Role & { extra: string }) => item.extra,
+            getItemKey: (item: Role) => item.id,
+        },
+    },
+])
+
 expectNotAssignable<Properties>({ value: 'outside RHF' })
 expectNotAssignable<Properties>({ required: true })
 expectNotAssignable<Properties>({ inputRef: () => {} })
@@ -386,6 +450,68 @@ const multiSelectConfig = defineConfig([
             items: roles,
             getItemLabel: (item: Role) => item.name,
             getItemKey: (item: Role) => item.id,
+        },
+    },
+])
+
+const autocompleteConfig = defineConfig([
+    {
+        accessor: 'roleSearch',
+        type: 'autocomplete',
+        properties: {
+            label: 'Role search',
+            options: roles,
+            getOptionLabel: (role: Role) => role.name,
+            getOptionKey: (role: Role) => role.id,
+        },
+    },
+    {
+        accessor: 'roleSearches',
+        type: 'autocomplete',
+        properties: {
+            label: 'Role searches',
+            multiple: true,
+            options: roles,
+            getOptionLabel: (role: Role) => role.name,
+        },
+    },
+])
+declare const autocompleteValues: InferFormValues<typeof autocompleteConfig>
+expectType<Role | null>(autocompleteValues.roleSearch)
+expectType<Role[]>(autocompleteValues.roleSearches)
+expectNotAssignable<DefaultValues<InferFormValues<typeof autocompleteConfig>>>({
+    roleSearches: roles[0],
+})
+expectType<JSX.Element>(
+    <FormBuilder
+        config={autocompleteConfig}
+        defaultValues={{ roleSearch: roles[0], roleSearches: [roles[1]] }}
+        onSubmit={(submitted, result) => {
+            expectType<Role | null>(submitted.roleSearch)
+            expectType<Role[]>(submitted.roleSearches)
+            expectType<'autocomplete'>(result.roleSearch.type)
+        }}
+    />,
+)
+expectNotAssignable<AutocompleteFieldConfig<Role>>({
+    accessor: 'roleSearch',
+    type: 'autocomplete',
+    properties: {
+        label: 'Role search',
+        options: roles,
+        getOptionLabel: (role: Role) => role.name,
+        value: roles[0],
+    },
+})
+defineConfig([
+    {
+        accessor: 'roleSearch',
+        type: 'autocomplete',
+        properties: {
+            label: 'Role search',
+            options: roles,
+            // @ts-expect-error callback must accept the option item type
+            getOptionLabel: (role: Role & { extra: string }) => role.extra,
         },
     },
 ])

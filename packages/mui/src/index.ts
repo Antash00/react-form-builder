@@ -6,7 +6,9 @@ export type {
     NumberFieldConfig,
     CheckboxFieldConfig,
     CheckboxGroupFieldConfig,
+    RadioGroupFieldConfig,
     SelectFieldConfig,
+    AutocompleteFieldConfig,
     FieldGroup,
 } from './types/'
 export type { InferFieldValue, InferFormValues } from './types/'

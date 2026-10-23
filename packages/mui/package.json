@@ -19,7 +19,8 @@
     "scripts": {
         "build:js": "rollup -c",
         "build:types": "tsc -p tsconfig.types.json",
-        "build": "rollup -c && tsc -p tsconfig.types.json",
+        "build": "node scripts/clean-dist.mjs && rollup -c && tsc -p tsconfig.types.json",
+        "prepack": "pnpm build",
         "typecheck": "pnpm build:types && tsc --noEmit",
         "test:types": "tsd --files test-d/form-builder.test-d.tsx",
         "test:unit": "vitest run",

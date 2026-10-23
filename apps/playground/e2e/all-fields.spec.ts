@@ -52,8 +52,15 @@ test('grouped fields use one column on mobile and two columns on desktop', async
 
 test('all-fields page exercises every supported field type', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('link', { name: 'All fields' }).click()
+    await page.evaluate(() => Object.assign(window, { __routeMarker: true }))
+    const navigation = page.getByRole('navigation', { name: 'Playground pages' })
+    await navigation.getByRole('link', { name: 'All fields' }).click()
     await expect(page).toHaveURL(/\/all-fields$/)
+    expect(await page.evaluate(() => '__routeMarker' in window)).toBe(true)
+    await expect(navigation.getByRole('link', { name: 'All fields' })).toHaveAttribute(
+        'aria-current',
+        'page',
+    )
 
     const allFields = page.getByRole('region', { name: 'All fields' })
     const submit = allFields.getByRole('button', { name: 'Submit' })
@@ -91,9 +98,16 @@ test('all-fields page exercises every supported field type', async ({ page }) =>
     await allFields.getByRole('combobox', { name: 'Primary role (single select)' }).click()
     await page.getByRole('option', { name: 'Editor' }).click()
 
+    await allFields.getByRole('radio', { name: 'Reviewer' }).check()
+
     await allFields.getByRole('combobox', { name: 'Additional roles (multiple select)' }).click()
     await page.getByRole('option', { name: 'Editor' }).click()
     await page.keyboard.press('Escape')
+
+    await allFields.getByRole('combobox', { name: 'Role (autocomplete)' }).fill('Rev')
+    await page.getByRole('option', { name: 'Reviewer' }).click()
+    await allFields.getByRole('combobox', { name: 'Roles (multiple autocomplete)' }).fill('Pub')
+    await page.getByRole('option', { name: 'Publisher' }).click()
     await submit.click()
 
     const submitted = JSON.parse(
@@ -107,6 +121,9 @@ test('all-fields page exercises every supported field type', async ({ page }) =>
         confirmed: true,
         roles: ['Publisher'],
         primaryRole: 'Editor',
+        approvalRole: 'Reviewer',
         additionalRoles: ['Reviewer', 'Editor'],
+        searchRole: 'Reviewer',
+        searchRoles: ['Publisher'],
     })
 })

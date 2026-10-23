@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('validates an empty field and submits typed text', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/basic')
     const basic = page.getByRole('region', { name: 'Basic form' })
 
     const name = basic.getByRole('textbox', { name: /Name/ })

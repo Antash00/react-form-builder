@@ -96,7 +96,8 @@ p {
 .playground-nav {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 12px 20px;
     margin: 24px 0;
 }
 
@@ -111,6 +112,16 @@ p {
     border: 1px solid var(--border);
     border-radius: 8px;
     text-align: left;
+}
+
+.case-list {
+    display: grid;
+    gap: 16px;
+    padding-left: 24px;
+}
+
+.case-list p {
+    margin-top: 4px;
 }
 
 .playground-panel form {

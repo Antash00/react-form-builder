@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('selects, clears, edits and validates saved selections', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/select-cases')
     const cases = page.getByRole('region', { name: 'Select cases' })
     const reviewer = cases.getByRole('combobox', { name: 'Reviewer' })
     const teams = cases.getByRole('combobox', { name: 'Teams' })
