@@ -1,4 +1,4 @@
-export const VERSION = 'dev'
+export const VERSION = '0.1.0'
 export { FormBuilder } from './form-builder/'
 
 export type {

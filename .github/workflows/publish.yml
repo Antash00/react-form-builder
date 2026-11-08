@@ -1,0 +1,55 @@
+name: Publish to npm
+
+on:
+    release:
+        types: [published]
+
+permissions:
+    contents: read
+
+jobs:
+    publish:
+        if: ${{ !github.event.release.prerelease }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 12.10.1
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  registry-url: https://registry.npmjs.org
+            - name: Verify release version
+              id: version
+              env:
+                  RELEASE_TAG: ${{ github.event.release.tag_name }}
+              run: |
+                  node -e 'const { name, version } = require("./packages/mui/package.json"); if (name !== "@antash00/form-builder-mui") throw new Error(`Unexpected package: ${name}`); if (process.env.RELEASE_TAG !== `v${version}`) throw new Error(`Release tag ${process.env.RELEASE_TAG} does not match package version ${version}`)'
+                  echo "number=$(node -p 'require("./packages/mui/package.json").version')" >> "$GITHUB_OUTPUT"
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter playground exec playwright install --with-deps chromium
+            - run: pnpm check
+            - name: Inspect package archive
+              working-directory: packages/mui
+              run: |
+                  npm pack --dry-run --json > pack.json
+                  node -e 'const files = require("./pack.json")[0].files.map(({ path }) => path); for (const path of ["LICENSE", "README.md", "dist/index.js", "dist/index.cjs", "dist/index.d.ts"]) { if (!files.includes(path)) throw new Error(`Missing from npm package: ${path}`) }'
+                  rm pack.json
+            - name: Check whether version is already published
+              id: existing
+              env:
+                  PACKAGE_VERSION: ${{ steps.version.outputs.number }}
+              run: |
+                  if npm view "@antash00/form-builder-mui@${PACKAGE_VERSION}" version --registry=https://registry.npmjs.org > /dev/null 2>&1; then
+                      echo "published=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "published=false" >> "$GITHUB_OUTPUT"
+                  fi
+            - name: Publish
+              if: ${{ steps.existing.outputs.published == 'false' }}
+              working-directory: packages/mui
+              run: npm publish --access public --ignore-scripts

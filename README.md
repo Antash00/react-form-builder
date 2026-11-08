@@ -5,7 +5,22 @@ submission wiring. React Form Builder MUI speeds up building those forms: descri
 the fields in a typed config, and the library connects React Hook Form to Material
 UI, renders the inputs, shows validation errors, and infers submitted value types.
 
-> Early development. API is not stable yet.
+The first public release is `0.1.0`. The API may change before `1.0`.
+
+## Installation
+
+```bash
+pnpm add @antash00/form-builder-mui @mui/material @emotion/react @emotion/styled react-hook-form
+```
+
+React and React DOM must also be present in the consuming application.
+
+See the [package README](packages/mui/README.md) for a complete example and
+[release notes](CHANGELOG.md) for changes in `0.1.0`.
+
+Licensed under [MIT](LICENSE).
+
+Maintainer instructions for npm publication are in [docs/releasing.md](docs/releasing.md).
 
 ## Current capabilities
 
