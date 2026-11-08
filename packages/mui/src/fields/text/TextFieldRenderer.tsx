@@ -1,7 +1,7 @@
 import { TextField } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
-import type { TextFieldConfig } from '../../types'
-import { isRequired } from '../../helpers'
+import type { TextFieldConfig } from '../../types/index.js'
+import { isRequired } from '../../helpers/index.js'
 
 type TextFieldRendererProps<TFieldValues extends FieldValues> = {
     config: TextFieldConfig

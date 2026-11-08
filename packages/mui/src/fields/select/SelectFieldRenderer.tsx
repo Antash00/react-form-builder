@@ -1,8 +1,8 @@
 import { useId } from 'react'
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
-import type { SelectFieldConfig } from '../../types'
-import { hasSupportingText, isRequired } from '../../helpers'
+import type { SelectFieldConfig } from '../../types/index.js'
+import { hasSupportingText, isRequired } from '../../helpers/index.js'
 
 type SelectFieldRendererProps<TFieldValues extends FieldValues> = {
     config: SelectFieldConfig

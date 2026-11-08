@@ -7,7 +7,7 @@ import type {
     RadioGroupProps,
     SelectProps,
 } from '@mui/material'
-import type { CheckboxFieldProperties, TextFieldProperties } from './inputsProperties'
+import type { CheckboxFieldProperties, TextFieldProperties } from './inputsProperties/index.js'
 
 export type NumberFieldProperties = TextFieldProperties extends infer TProps
     ? TProps extends unknown
@@ -136,21 +136,24 @@ type SelectProperties = SelectProps extends infer TProps
         : never
     : never
 
+type SelectFieldProperties<TItem> = SelectProperties & {
+    items: readonly TItem[]
+    label: ReactNode
+    helperText?: ReactNode
+    emptyLabel?: ReactNode
+    getItemLabel: (item: TItem) => ReactNode
+    getItemKey: (item: TItem) => string | number
+}
+
 export type SelectFieldConfig<TItem = unknown, TAccessor extends string = string> = BaseFieldConfig<
     TAccessor,
     'select'
 > & {
-    properties: SelectProperties & {
-        items: readonly TItem[]
-        label: ReactNode
-        multiple?: boolean
-        helperText?: ReactNode
-        emptyLabel?: ReactNode
-        getItemLabel: (item: TItem) => ReactNode
-        getItemKey: (item: TItem) => string | number
-    }
     rules?: Pick<RegisterOptions, 'required'>
-}
+} & (
+        | { properties: SelectFieldProperties<TItem> & { multiple: true } }
+        | { properties: SelectFieldProperties<TItem> & { multiple?: false } }
+    )
 
 type ControlledAutocompleteProps =
     | 'value'
@@ -163,22 +166,26 @@ type ControlledAutocompleteProps =
     | 'id'
     | 'className'
 
+type AutocompleteFieldProperties<TItem> = Omit<
+    AutocompleteProps<TItem, boolean, false, false>,
+    ControlledAutocompleteProps | 'getOptionLabel'
+> & {
+    [TKey in ControlledAutocompleteProps]?: never
+} & {
+    label: string
+    helperText?: ReactNode
+    getOptionLabel: (option: TItem) => string
+}
+
 export type AutocompleteFieldConfig<
     TItem = unknown,
     TAccessor extends string = string,
 > = BaseFieldConfig<TAccessor, 'autocomplete'> & {
-    properties: Omit<
-        AutocompleteProps<TItem, boolean, false, false>,
-        ControlledAutocompleteProps | 'getOptionLabel'
-    > & {
-        [TKey in ControlledAutocompleteProps]?: never
-    } & {
-        label: string
-        helperText?: ReactNode
-        getOptionLabel: (option: TItem) => string
-    }
     rules?: Pick<RegisterOptions, 'required'>
-}
+} & (
+        | { properties: AutocompleteFieldProperties<TItem> & { multiple: true } }
+        | { properties: AutocompleteFieldProperties<TItem> & { multiple?: false } }
+    )
 
 // The broad union accepts each group's own item type; defineConfig checks its callbacks against items.
 type AnyCheckboxGroupField<TAccessor extends string> = Omit<
@@ -207,28 +214,34 @@ type AnyRadioGroupField<TAccessor extends string> = Omit<
     }
 }
 
-type AnySelectField<TAccessor extends string> = Omit<
-    SelectFieldConfig<unknown, TAccessor>,
-    'properties'
-> & {
-    properties: Omit<SelectFieldConfig<unknown>['properties'], 'getItemLabel' | 'getItemKey'> & {
-        getItemLabel(item: unknown): ReactNode
-        getItemKey(item: unknown): string | number
-    }
-}
+type AnySelectField<TAccessor extends string> =
+    SelectFieldConfig<unknown, TAccessor> extends infer TField
+        ? TField extends { properties: infer TProperties }
+            ? Omit<TField, 'properties'> & {
+                  properties: Omit<TProperties, 'getItemLabel' | 'getItemKey'> & {
+                      getItemLabel(item: unknown): ReactNode
+                      getItemKey(item: unknown): string | number
+                  }
+              }
+            : never
+        : never
 
-type AnyAutocompleteField<TAccessor extends string> = Omit<
-    AutocompleteFieldConfig<unknown, TAccessor>,
-    'properties'
-> & {
-    properties: Omit<
-        AutocompleteFieldConfig<unknown>['properties'],
-        'getOptionLabel' | 'getOptionKey' | 'isOptionEqualToValue'
-    > & {
+// This constraint keeps item callbacks assignable for annotated configs. defineConfig
+// validates the full MUI property surface against each field's actual item type.
+type AnyAutocompleteField<TAccessor extends string> = BaseFieldConfig<TAccessor, 'autocomplete'> & {
+    properties: {
+        [property: string]: unknown
+        options: readonly unknown[]
+        label: string
+        helperText?: ReactNode
+        multiple?: boolean
+        disabled?: boolean
         getOptionLabel(option: unknown): string
         getOptionKey?(option: unknown): string | number
         isOptionEqualToValue?(option: unknown, value: unknown): boolean
+        groupBy?(option: unknown): string
     }
+    rules?: Pick<RegisterOptions, 'required'>
 }
 
 export type ItemField<TAccessor extends string = string> =

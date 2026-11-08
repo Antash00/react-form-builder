@@ -1,1 +1,1 @@
-export { NumberFieldRenderer } from './NumberFieldRenderer'
+export { NumberFieldRenderer } from './NumberFieldRenderer.js'

@@ -300,24 +300,36 @@ export function SupplierOnboardingForm() {
             <FormBuilder
                 config={config}
                 defaultValues={{
+                    legalName: '',
+                    tradingName: '',
                     registrationNumber: 'ACME-2026',
                     taxId: 'US123456789',
+                    website: '',
+                    yearFounded: null,
                     industry: industries[0],
                     country: countries[14],
                     stateProvince: 'New York',
                     city: 'New York',
                     postalCode: '10001',
                     addressLine1: '100 Market Street',
+                    addressLine2: '',
                     primaryContact: 'Dana Lewis',
+                    contactTitle: '',
                     contactEmail: 'dana@example.com',
                     contactPhone: '+1 212 555 0198',
+                    supportEmail: '',
                     currency: currencies[9],
                     paymentTerms: paymentTerms[2],
                     annualSpend: 125000,
+                    leadTimeDays: null,
                     categories: [supplierCategories[9]],
                     regions: [regions[0]],
                     accountOwner: managers[1],
                     contractType: contractTypes[0],
+                    insuranceCoverage: null,
+                    dataProcessing: false,
+                    complianceApproved: false,
+                    notes: '',
                 }}
                 onSubmit={(values, result) => {
                     console.log('Supplier onboarding submit', { values, result })

@@ -1,10 +1,46 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
 
 afterEach(cleanup)
+
+test('customizes action buttons while keeping submit and reset behavior', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const onResetClick = vi.fn()
+    const config = defineConfig([{ accessor: 'name', type: 'text', properties: { label: 'Name' } }])
+
+    const { rerender } = render(
+        <FormBuilder
+            config={config}
+            onSubmit={onSubmit}
+            submitButtonProps={{ children: 'Save', color: 'success', title: 'Save form' }}
+            resetButtonProps={{ children: 'Clear', size: 'small', onClick: onResetClick }}
+        />,
+    )
+
+    const name = screen.getByRole('textbox', { name: 'Name' })
+    const save = screen.getByRole('button', { name: 'Save' })
+    expect(save).toHaveAttribute('type', 'submit')
+    expect(save).toHaveAttribute('title', 'Save form')
+    expect(save).toHaveClass('MuiButton-colorSuccess')
+    await user.type(name, 'Ada')
+    await user.click(save)
+    expect(onSubmit).toHaveBeenCalledWith({ name: 'Ada' }, { name: { type: 'text', value: 'Ada' } })
+
+    const clear = screen.getByRole('button', { name: 'Clear' })
+    expect(clear).toHaveAttribute('type', 'reset')
+    expect(clear).toHaveClass('MuiButton-sizeSmall')
+    await user.click(clear)
+    expect(onResetClick).toHaveBeenCalledOnce()
+    expect(name).toHaveValue('')
+
+    rerender(<FormBuilder config={config} onSubmit={onSubmit} resetButtonProps={false} />)
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument()
+})
 
 test('disabled basic fields skip required validation and keep their initial values', async () => {
     const user = userEvent.setup()
@@ -435,7 +471,7 @@ test('checkboxes use the parent MUI theme color unless config or validation over
     expect(consent.closest('.MuiCheckbox-root')).toHaveClass('MuiCheckbox-colorError')
 })
 
-test('submits initialized strings for untouched fields and partial edit defaults', async () => {
+test('submits complete edit defaults for untouched fields', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     const config = defineConfig([
@@ -444,7 +480,11 @@ test('submits initialized strings for untouched fields and partial edit defaults
     ])
 
     const form = render(
-        <FormBuilder config={config} defaultValues={{ name: 'Ada' }} onSubmit={onSubmit} />,
+        <FormBuilder
+            config={config}
+            defaultValues={{ name: 'Ada', notes: '' }}
+            onSubmit={onSubmit}
+        />,
     )
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Ada')
     expect(screen.getByRole('textbox', { name: 'Notes' })).toHaveValue('')
@@ -464,7 +504,7 @@ test('submits initialized strings for untouched fields and partial edit defaults
     )
 })
 
-test('initializes checkbox values as booleans and applies partial edit defaults', async () => {
+test('initializes checkbox values as booleans and applies complete edit defaults', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     const config = defineConfig([
@@ -485,7 +525,13 @@ test('initializes checkbox values as booleans and applies partial edit defaults'
         },
     ])
 
-    render(<FormBuilder config={config} defaultValues={{ active: true }} onSubmit={onSubmit} />)
+    render(
+        <FormBuilder
+            config={config}
+            defaultValues={{ name: '', active: true, archived: false }}
+            onSubmit={onSubmit}
+        />,
+    )
 
     const active = screen.getByRole('checkbox', { name: 'Active' })
     const archived = screen.getByRole('checkbox', { name: 'Archived' })
@@ -1074,5 +1120,152 @@ test('rejects duplicate and nested accessors', () => {
     const nested = defineConfig([{ accessor: 'user.name', type: 'text' }])
     expect(() => render(<FormBuilder config={nested} onSubmit={() => {}} />)).toThrow(
         'Invalid accessor "user.name"',
+    )
+
+    for (const accessor of [...Object.getOwnPropertyNames(Object.prototype), 'prototype']) {
+        const reserved = defineConfig([{ accessor, type: 'text' }])
+        expect(() => render(<FormBuilder config={reserved} onSubmit={() => {}} />)).toThrow(
+            `Invalid accessor "${accessor}"`,
+        )
+    }
+})
+
+test('does not crash when a checkbox group is added to an existing form', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const initial = defineConfig([{ accessor: 'name', type: 'text' }])
+    const updated = defineConfig([
+        { accessor: 'name', type: 'text' },
+        {
+            accessor: 'roles',
+            type: 'checkboxGroup',
+            properties: {
+                label: 'Roles',
+                items: [{ id: 1, name: 'Editor' }],
+                getItemLabel: (item: { id: number; name: string }) => item.name,
+                getItemKey: (item: { id: number; name: string }) => item.id,
+            },
+        },
+    ])
+    const form = render(<FormBuilder config={initial} onSubmit={onSubmit} />)
+
+    expect(() => form.rerender(<FormBuilder config={updated} onSubmit={onSubmit} />)).not.toThrow()
+    await user.click(screen.getByRole('checkbox', { name: 'Editor' }))
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit.mock.calls[0][0].roles).toEqual([{ id: 1, name: 'Editor' }])
+})
+
+test('ignores a second submit while the first is pending', async () => {
+    let resolveSubmit: () => void = () => {}
+    const pending = new Promise<void>((resolve) => {
+        resolveSubmit = resolve
+    })
+    const onSubmit = vi.fn(() => pending)
+    const config = defineConfig([{ accessor: 'name', type: 'text' }])
+    const { container } = render(<FormBuilder config={config} onSubmit={onSubmit} />)
+    const form = container.querySelector('form')
+    if (!form) throw new Error('FormBuilder did not render a form')
+
+    fireEvent.submit(form)
+    fireEvent.submit(form)
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeDisabled())
+
+    resolveSubmit()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled())
+    fireEvent.submit(form)
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2))
+})
+
+test.each(['radioGroup', 'checkboxGroup', 'select'] as const)(
+    '%s discards unavailable default choices before required validation',
+    async (type) => {
+        const user = userEvent.setup()
+        const onSubmit = vi.fn()
+        const items = [{ id: 1, name: 'Editor' }]
+        const missing = { id: 2, name: 'Removed' }
+        const properties = {
+            label: 'Roles',
+            items,
+            getItemLabel: (item: (typeof items)[number]) => item.name,
+            getItemKey: (item: (typeof items)[number]) => item.id,
+        }
+        const rules = { required: 'Choose a role' }
+        if (type === 'checkboxGroup') {
+            const config = defineConfig([{ accessor: 'roles', type, properties, rules }])
+            render(
+                <FormBuilder
+                    config={config}
+                    defaultValues={{ roles: [missing] }}
+                    onSubmit={onSubmit}
+                />,
+            )
+        } else if (type === 'radioGroup') {
+            const config = defineConfig([{ accessor: 'roles', type, properties, rules }])
+            render(
+                <FormBuilder
+                    config={config}
+                    defaultValues={{ roles: missing }}
+                    onSubmit={onSubmit}
+                />,
+            )
+        } else {
+            const config = defineConfig([{ accessor: 'roles', type, properties, rules }])
+            render(
+                <FormBuilder
+                    config={config}
+                    defaultValues={{ roles: missing }}
+                    onSubmit={onSubmit}
+                />,
+            )
+        }
+
+        await user.click(screen.getByRole('button', { name: 'Submit' }))
+        expect(onSubmit).not.toHaveBeenCalled()
+        expect(await screen.findByText('Choose a role')).toBeVisible()
+
+        if (type === 'checkboxGroup') {
+            await user.click(screen.getByRole('checkbox', { name: 'Editor' }))
+        } else if (type === 'radioGroup') {
+            await user.click(screen.getByRole('radio', { name: 'Editor' }))
+        } else {
+            await user.click(screen.getByRole('combobox', { name: 'Roles' }))
+            await user.click(screen.getByRole('option', { name: 'Editor' }))
+        }
+        await user.click(screen.getByRole('button', { name: 'Submit' }))
+        expect(onSubmit).toHaveBeenCalledTimes(1)
+        expect(onSubmit.mock.calls[0][0].roles).toEqual(type === 'checkboxGroup' ? items : items[0])
+    },
+)
+
+test('multiple select removes unavailable defaults but preserves current choices', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const current = { id: 1, name: 'Editor' }
+    const config = defineConfig([
+        {
+            accessor: 'roles',
+            type: 'select',
+            properties: {
+                label: 'Roles',
+                multiple: true,
+                items: [current],
+                getItemLabel: (item: typeof current) => item.name,
+                getItemKey: (item: typeof current) => item.id,
+            },
+            rules: { required: 'Choose a role' },
+        },
+    ])
+    render(
+        <FormBuilder
+            config={config}
+            defaultValues={{ roles: [{ id: 2, name: 'Removed' }, { ...current }] }}
+            onSubmit={onSubmit}
+        />,
+    )
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(onSubmit).toHaveBeenCalledWith(
+        { roles: [current] },
+        { roles: { type: 'select', value: [current] } },
     )
 })

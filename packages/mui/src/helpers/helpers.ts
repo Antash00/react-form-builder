@@ -6,7 +6,7 @@ import type {
     ItemField,
     RadioGroupFieldConfig,
     SelectFieldConfig,
-} from '../types'
+} from '../types/index.js'
 import type { RegisterOptions } from 'react-hook-form'
 import type { ReactNode } from 'react'
 
@@ -51,10 +51,12 @@ export function assertValidAccessors(config: readonly ItemField[]): void {
             accessor === '' ||
             accessor.includes('.') ||
             accessor.includes('[') ||
-            accessor.includes(']')
+            accessor.includes(']') ||
+            Object.prototype.hasOwnProperty.call(Object.prototype, accessor) ||
+            accessor === 'prototype'
         ) {
             throw new Error(
-                `Invalid accessor "${accessor}": use a non-empty name without dots or brackets`,
+                `Invalid accessor "${accessor}": use a non-empty name without dots, brackets, or reserved object keys`,
             )
         }
         if (seen.has(accessor)) {

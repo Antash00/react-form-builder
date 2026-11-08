@@ -24,11 +24,22 @@ React and React DOM must also be present in the consuming application.
   props such as value, change and blur handlers.
 - `rules` connect supported React Hook Form validation to MUI error and required
   states.
-- `defaultValues` initialize forms for editing existing data.
+- `defaultValues` initialize forms for editing existing data. You may omit fields,
+  but each supplied value must match its complete field type. Unavailable select
+  and group choices are discarded before validation.
+- `config` and `defaultValues` are fixed for a mounted form. To switch to a different
+  configuration, remount `FormBuilder` (for example, by changing its React `key`).
+- Field accessors must be flat names without dots or brackets. The reserved key
+  `prototype` and all own keys of `Object.prototype` are rejected.
+- Submit is disabled while an asynchronous `onSubmit` is pending.
+- Handle rejected promises inside an asynchronous `onSubmit`. FormBuilder
+  releases its pending state but does not display or consume submission errors.
+- `submitButtonProps` and `resetButtonProps` customize the MUI action buttons.
 - Optional `groups` arrange selected fields with MUI Grid. Other fields follow in config order.
-- Select, radio group, checkbox group, and autocomplete fields keep the original
-  item objects in submitted values. `getItemKey` matches saved objects to current
-  items in select and group fields.
+- Select, radio group, and checkbox group fields submit current item objects.
+  `getItemKey` matches saved objects to current items. Autocomplete preserves
+  its selected option objects, even when they are absent from `options` while
+  options load asynchronously.
 - The playground is a consumer of the package and contains working examples of
   every supported field type.
 
@@ -143,8 +154,26 @@ and `additionalRoles` as `Role[]`, and `primaryRole`, `approvalRole`, and
 `searchRole` as `Role | null`. Select and radio defaults may be different object
 instances from `items` when their keys match. For autocomplete, pass
 `isOptionEqualToValue` when saved values may be different instances from
-`options`. `emptyLabel` adds a clear option to a single select. The optional
+`options`. A selected autocomplete value may temporarily be absent from `options`
+while choices load asynchronously; FormBuilder keeps that value. `emptyLabel`
+adds a clear option to a single select. The optional
 second submit argument contains each field's type and value.
+
+The action buttons default to **Submit** and **Reset**. Pass MUI button props to
+change their labels through `children` or customize their appearance. The builder
+controls each button's `type`, HTML element, and form membership; `type`, `href`,
+`component`, and `form` cannot be overridden. Submit stays disabled during an
+asynchronous submit.
+Set `resetButtonProps={false}` to hide Reset:
+
+```tsx
+<FormBuilder
+    config={config}
+    onSubmit={handleSubmit}
+    submitButtonProps={{ children: 'Save', color: 'success' }}
+    resetButtonProps={false}
+/>
+```
 
 For a responsive layout, pass groups of field accessors to `FormBuilder`:
 

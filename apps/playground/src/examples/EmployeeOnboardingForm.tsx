@@ -237,7 +237,9 @@ export function EmployeeOnboardingForm() {
             <FormBuilder
                 config={config}
                 defaultValues={{
+                    firstName: '',
                     lastName: 'Rivera',
+                    preferredName: '',
                     workEmail: 'sam.rivera@example.com',
                     phone: '+1 202 555 0187',
                     employeeId: 'HR-2048',
@@ -253,6 +255,8 @@ export function EmployeeOnboardingForm() {
                     weeklyHours: 40,
                     equipment: [equipment[0], equipment[1]],
                     accessGroups: [accessGroups[0]],
+                    policyAccepted: false,
+                    notes: '',
                 }}
                 onSubmit={(values, result) => {
                     console.log('Employee onboarding submit', { values, result })

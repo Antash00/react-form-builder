@@ -1,6 +1,18 @@
 {
     "name": "@antash00/form-builder-mui",
     "version": "0.1.0",
+    "description": "Typed, config-driven React forms with React Hook Form and MUI",
+    "keywords": [
+        "react",
+        "forms",
+        "form-builder",
+        "react-hook-form",
+        "mui",
+        "material-ui",
+        "typescript"
+    ],
+    "homepage": "https://github.com/antash00/react-form-builder#readme",
+    "bugs": "https://github.com/antash00/react-form-builder/issues",
     "license": "MIT",
     "repository": "https://github.com/antash00/react-form-builder",
     "type": "module",
@@ -24,6 +36,7 @@
         "prepack": "pnpm build",
         "typecheck": "pnpm build:types && tsc --noEmit",
         "test:types": "tsd --files test-d/form-builder.test-d.tsx",
+        "test:commonjs": "node scripts/verify-commonjs.mjs",
         "test:unit": "vitest run",
         "test": "pnpm build && pnpm test:types && pnpm test:unit"
     },

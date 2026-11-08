@@ -1,1 +1,1 @@
-export { AutocompleteFieldRenderer } from './AutocompleteFieldRenderer'
+export { AutocompleteFieldRenderer } from './AutocompleteFieldRenderer.js'

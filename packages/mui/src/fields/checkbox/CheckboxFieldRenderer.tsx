@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
-import type { CheckboxFieldConfig } from '../../types'
-import { hasSupportingText, isRequired } from '../../helpers'
+import type { CheckboxFieldConfig } from '../../types/index.js'
+import { hasSupportingText, isRequired } from '../../helpers/index.js'
 import {
     Checkbox,
     FormControl,

@@ -95,6 +95,8 @@ export const BasicForm = () => {
         <>
             <FormBuilder
                 config={config}
+                submitButtonProps={{ children: 'Save form', color: 'success' }}
+                resetButtonProps={false}
                 onSubmit={(values, result) => {
                     console.log('Basic form submit', { values, result })
                     setSubmittedName(values.name)

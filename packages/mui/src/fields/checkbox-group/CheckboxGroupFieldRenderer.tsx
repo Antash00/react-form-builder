@@ -8,8 +8,8 @@ import {
     FormLabel,
 } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
-import type { CheckboxGroupFieldConfig } from '../../types'
-import { hasSupportingText, isRequired } from '../../helpers'
+import type { CheckboxGroupFieldConfig } from '../../types/index.js'
+import { hasSupportingText, isRequired } from '../../helpers/index.js'
 
 type CheckboxGroupFieldRendererProps<TFieldValues extends FieldValues> = {
     config: CheckboxGroupFieldConfig
@@ -35,6 +35,7 @@ export const CheckboxGroupFieldRenderer = <TFieldValues extends FieldValues>({
             control={control}
             rules={disabled ? undefined : config.rules}
             render={({ field, fieldState }) => {
+                const selectedItems: unknown[] = Array.isArray(field.value) ? field.value : []
                 const supportingText = fieldState.error?.message ?? helperText
                 const showSupportingText = hasSupportingText(supportingText)
 
@@ -49,16 +50,16 @@ export const CheckboxGroupFieldRenderer = <TFieldValues extends FieldValues>({
                         <FormGroup {...groupProps} role="group" aria-labelledby={labelId}>
                             {items.map((item, index) => {
                                 const itemKey = getItemKey(item)
-                                const checked = field.value.some(
+                                const checked = selectedItems.some(
                                     (selected: unknown) => getItemKey(selected) === itemKey,
                                 )
                                 const toggleItem = (nextChecked: boolean) => {
                                     if (nextChecked) {
-                                        field.onChange([...field.value, item])
+                                        field.onChange([...selectedItems, item])
                                         return
                                     }
                                     field.onChange(
-                                        field.value.filter(
+                                        selectedItems.filter(
                                             (selected: unknown) => getItemKey(selected) !== itemKey,
                                         ),
                                     )

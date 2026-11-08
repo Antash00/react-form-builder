@@ -1,10 +1,10 @@
 import { Autocomplete, TextField } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
-import type { AutocompleteFieldConfig } from '../../types'
-import { isRequired } from '../../helpers'
+import type { ItemField } from '../../types/index.js'
+import { isRequired } from '../../helpers/index.js'
 
 type AutocompleteFieldRendererProps<TFieldValues extends FieldValues> = {
-    config: AutocompleteFieldConfig
+    config: Extract<ItemField, { type: 'autocomplete' }>
     control: Control<TFieldValues>
 }
 

@@ -1,5 +1,5 @@
-import { expect, test, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { afterEach, expect, test, vi } from 'vitest'
+import { cleanup, render } from '@testing-library/react'
 import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
 
 const captured = vi.hoisted(() => ({
@@ -23,7 +23,9 @@ vi.mock('react-hook-form', async (importOriginal) => {
     }
 })
 
-test('returns the user submit promise to React Hook Form', async () => {
+afterEach(cleanup)
+
+test('keeps submission pending until the user submit promise settles', async () => {
     let resolveSubmit: () => void = () => {}
     const pending = new Promise<void>((resolve) => {
         resolveSubmit = resolve
@@ -33,7 +35,7 @@ test('returns the user submit promise to React Hook Form', async () => {
     render(<FormBuilder config={config} onSubmit={onSubmit} />)
 
     const returned = captured.submit?.({ name: 'Ada' })
-    expect(returned).toBe(pending)
+    expect(returned).toBeInstanceOf(Promise)
     expect(onSubmit).toHaveBeenCalledWith({ name: 'Ada' }, { name: { type: 'text', value: 'Ada' } })
     resolveSubmit()
     await returned

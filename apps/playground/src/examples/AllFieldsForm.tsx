@@ -141,7 +141,19 @@ export const AllFieldsForm = () => {
                     { fields: ['name', 'email'], columns: { xs: 1, md: 2 }, gap: 2 },
                     { fields: ['budget', 'notes'], columns: { xs: 1, md: 2 }, gap: 3 },
                 ]}
-                defaultValues={{ budget: 0, notes: 'Existing note', additionalRoles: [roles[1]] }}
+                defaultValues={{
+                    name: '',
+                    email: '',
+                    budget: 0,
+                    notes: 'Existing note',
+                    confirmed: false,
+                    roles: [],
+                    primaryRole: null,
+                    approvalRole: null,
+                    additionalRoles: [roles[1]],
+                    searchRole: null,
+                    searchRoles: [],
+                }}
                 onSubmit={(values, result) => {
                     console.log('All fields submit', { values, result })
                     setSubmitted(

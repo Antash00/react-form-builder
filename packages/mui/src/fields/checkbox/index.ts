@@ -1,1 +1,1 @@
-export * from './CheckboxFieldRenderer'
+export * from './CheckboxFieldRenderer.js'

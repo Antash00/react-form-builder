@@ -1,1 +1,1 @@
-export { CheckboxGroupFieldRenderer } from './CheckboxGroupFieldRenderer'
+export { CheckboxGroupFieldRenderer } from './CheckboxGroupFieldRenderer.js'

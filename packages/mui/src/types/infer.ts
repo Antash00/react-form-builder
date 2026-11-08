@@ -1,4 +1,4 @@
-import type { ItemField } from './types'
+import type { ItemField } from './types.js'
 
 type InferSelectionValue<TField, TItem> = TField extends {
     properties: { multiple: infer TMultiple extends boolean }

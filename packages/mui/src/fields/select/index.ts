@@ -1,1 +1,1 @@
-export { SelectFieldRenderer } from './SelectFieldRenderer'
+export { SelectFieldRenderer } from './SelectFieldRenderer.js'

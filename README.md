@@ -29,11 +29,18 @@ Maintainer instructions for npm publication are in [docs/releasing.md](docs/rele
   props such as value, change and blur handlers.
 - `rules` connect supported React Hook Form validation to MUI error and required
   states.
-- `defaultValues` initialize forms for editing existing data.
+- `defaultValues` initialize forms for editing existing data. You may omit fields,
+  but each supplied value must match its complete field type. Unavailable select
+  and group choices are discarded before validation.
+- `config` and `defaultValues` are fixed for a mounted form. Remount `FormBuilder`
+  when switching to a different configuration.
 - Optional `groups` arrange selected fields with MUI Grid. Other fields follow in config order.
-- Select, radio group, checkbox group, and autocomplete fields keep the original
-  item objects in submitted values. `getItemKey` matches saved objects to current
-  items in select and group fields.
+- Select, radio group, and checkbox group fields submit current item objects.
+  `getItemKey` matches saved objects to current items. Autocomplete preserves
+  its selected option objects, even when they are absent from `options` while
+  options load asynchronously.
+- Handle rejected promises inside an asynchronous `onSubmit`; FormBuilder
+  releases its pending state but does not display or consume submission errors.
 - The playground is a consumer of the package and contains working examples of
   every supported field type.
 

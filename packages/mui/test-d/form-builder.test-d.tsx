@@ -36,7 +36,7 @@ expectNotAssignable<keyof typeof values>('missing')
 expectType<JSX.Element>(
     <FormBuilder
         config={config}
-        defaultValues={{ name: 'Ada' }}
+        defaultValues={{ name: 'Ada', amount: '' }}
         onSubmit={(submitted, result) => {
             expectType<string>(submitted.name)
             expectType<string>(submitted.amount)
@@ -115,7 +115,7 @@ expectNotAssignable<DefaultValues<InferFormValues<typeof checkboxConfig>>>({ act
 expectType<JSX.Element>(
     <FormBuilder
         config={checkboxConfig}
-        defaultValues={{ active: true }}
+        defaultValues={{ name: '', active: true }}
         onSubmit={(submitted) => {
             expectType<string>(submitted.name)
             expectType<boolean>(submitted.active)
@@ -198,7 +198,7 @@ expectNotAssignable<DefaultValues<InferFormValues<typeof groupConfig>>>({ roles:
 expectType<JSX.Element>(
     <FormBuilder
         config={groupConfig}
-        defaultValues={{ roles: [{ id: 1, name: 'Editor' }] }}
+        defaultValues={{ name: '', roles: [{ id: 1, name: 'Editor' }], permissions: [] }}
         onSubmit={(submitted, result) => {
             expectType<Role[]>(submitted.roles)
             expectType<Permission[]>(submitted.permissions)
@@ -463,6 +463,7 @@ const autocompleteConfig = defineConfig([
             options: roles,
             getOptionLabel: (role: Role) => role.name,
             getOptionKey: (role: Role) => role.id,
+            groupBy: (role: Role) => role.name[0],
         },
     },
     {
@@ -517,6 +518,70 @@ defineConfig([
 ])
 declare const multiSelectValues: InferFormValues<typeof multiSelectConfig>
 expectType<Role[]>(multiSelectValues.additionalRoles)
+
+const annotatedMultiSelect: SelectFieldConfig<Role, 'roles'> = {
+    accessor: 'roles',
+    type: 'select',
+    properties: {
+        label: 'Roles',
+        multiple: true,
+        items: roles,
+        getItemLabel: (item) => item.name,
+        getItemKey: (item) => item.id,
+    },
+}
+const annotatedSelectConfig = defineConfig([annotatedMultiSelect])
+expectAssignable<readonly SelectFieldConfig<Role, 'roles'>[]>(annotatedSelectConfig)
+declare const annotatedSelectValues: InferFormValues<typeof annotatedSelectConfig>
+expectType<Role[]>(annotatedSelectValues.roles)
+
+const annotatedAutocomplete: AutocompleteFieldConfig<Role, 'role'> = {
+    accessor: 'role',
+    type: 'autocomplete',
+    properties: {
+        label: 'Role',
+        options: roles,
+        getOptionLabel: (option) => option.name,
+        groupBy: (option) => option.name[0],
+    },
+}
+const annotatedAutocompleteConfig = defineConfig([annotatedAutocomplete])
+expectAssignable<readonly AutocompleteFieldConfig<Role, 'role'>[]>(annotatedAutocompleteConfig)
+declare const annotatedAutocompleteValues: InferFormValues<typeof annotatedAutocompleteConfig>
+expectType<Role | null>(annotatedAutocompleteValues.role)
+
+const annotatedMultiAutocomplete: AutocompleteFieldConfig<Role, 'roles'> = {
+    accessor: 'roles',
+    type: 'autocomplete',
+    properties: {
+        label: 'Roles',
+        multiple: true,
+        options: roles,
+        getOptionLabel: (option) => option.name,
+    },
+}
+const annotatedMultiAutocompleteConfig = defineConfig([annotatedMultiAutocomplete])
+expectAssignable<readonly AutocompleteFieldConfig<Role, 'roles'>[]>(
+    annotatedMultiAutocompleteConfig,
+)
+declare const annotatedMultiAutocompleteValues: InferFormValues<
+    typeof annotatedMultiAutocompleteConfig
+>
+expectType<Role[]>(annotatedMultiAutocompleteValues.roles)
+
+defineConfig([
+    {
+        accessor: 'invalidAutocomplete',
+        type: 'autocomplete',
+        properties: {
+            label: 'Invalid',
+            options: roles,
+            getOptionLabel: (option: Role) => option.name,
+            // @ts-expect-error properties must still be supported by MUI
+            inventedProperty: true,
+        },
+    },
+])
 expectNotAssignable<DefaultValues<InferFormValues<typeof multiSelectConfig>>>({
     additionalRoles: roles[0],
 })
@@ -524,9 +589,81 @@ expectType<JSX.Element>(
     <FormBuilder
         config={multiSelectConfig}
         defaultValues={{ additionalRoles: [roles[0]] }}
+        submitButtonProps={{ children: 'Save', color: 'success', size: 'small' }}
+        resetButtonProps={false}
         onSubmit={(submitted, result) => {
             expectType<Role[]>(submitted.additionalRoles)
             expectType<Role[]>(result.additionalRoles.value)
         }}
     />,
 )
+
+expectType<JSX.Element>(
+    <FormBuilder
+        config={multiSelectConfig}
+        onSubmit={() => {}}
+        resetButtonProps={{
+            children: 'Clear',
+            variant: 'text',
+            onClick: (event) => event.preventDefault(),
+        }}
+    />,
+)
+
+expectType<JSX.Element>(
+    <FormBuilder
+        config={multiSelectConfig}
+        onSubmit={() => {}}
+        // @ts-expect-error FormBuilder owns the submit button type
+        submitButtonProps={{ type: 'button' }}
+    />,
+)
+
+expectType<JSX.Element>(
+    <FormBuilder
+        config={multiSelectConfig}
+        onSubmit={() => {}}
+        // @ts-expect-error FormBuilder owns the reset button type
+        resetButtonProps={{ type: 'submit' }}
+    />,
+)
+
+const incompleteDefaults = { roles: [roles[0]] }
+expectAssignable<Partial<InferFormValues<typeof groupConfig>>>(incompleteDefaults)
+expectType<JSX.Element>(
+    <FormBuilder
+        config={groupConfig}
+        defaultValues={incompleteDefaults}
+        onSubmit={(submitted) => {
+            expectType<string>(submitted.name)
+            expectType<Role[]>(submitted.roles)
+            expectType<Permission[]>(submitted.permissions)
+        }}
+    />,
+)
+
+const incompleteRoleDefaults = { roles: [{ id: 1 }] }
+expectNotAssignable<Partial<InferFormValues<typeof groupConfig>>>(incompleteRoleDefaults)
+expectType<JSX.Element>(
+    // @ts-expect-error domain objects in defaultValues must include required properties
+    <FormBuilder config={groupConfig} defaultValues={incompleteRoleDefaults} onSubmit={() => {}} />,
+)
+
+for (const buttonProps of [{ href: '/next' }, { component: 'span' }, { form: 'external' }]) {
+    expectType<JSX.Element>(
+        <FormBuilder
+            config={multiSelectConfig}
+            onSubmit={() => {}}
+            // @ts-expect-error action buttons must remain in the FormBuilder form
+            submitButtonProps={buttonProps}
+        />,
+    )
+    expectType<JSX.Element>(
+        <FormBuilder
+            config={multiSelectConfig}
+            onSubmit={() => {}}
+            // @ts-expect-error reset button must remain in the FormBuilder form
+            resetButtonProps={buttonProps}
+        />,
+    )
+}

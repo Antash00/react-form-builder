@@ -1,2 +1,2 @@
-export type { TextFieldProperties } from './text-field-properties'
-export type { CheckboxFieldProperties } from './checkbox-field-properties'
+export type { TextFieldProperties } from './text-field-properties.js'
+export type { CheckboxFieldProperties } from './checkbox-field-properties.js'

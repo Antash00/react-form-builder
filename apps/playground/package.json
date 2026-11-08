@@ -8,7 +8,8 @@
         "typecheck": "tsc -b",
         "build": "tsc -b tsconfig.build.json tsconfig.node.json && vite build",
         "preview": "vite preview",
-        "test:e2e": "playwright test"
+        "test:e2e": "pnpm --filter @antash00/form-builder-mui build && pnpm build && playwright test",
+        "test:consumer:nodenext": "tsc -p consumer-tests/nodenext/tsconfig.json && tsc -p consumer-tests/nodenext/tsconfig.skip-lib-check.json"
     },
     "dependencies": {
         "@antash00/form-builder-mui": "workspace:*",

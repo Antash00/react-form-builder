@@ -8,8 +8,8 @@ import {
     RadioGroup,
 } from '@mui/material'
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form'
-import type { RadioGroupFieldConfig } from '../../types'
-import { hasSupportingText, isRequired } from '../../helpers'
+import type { RadioGroupFieldConfig } from '../../types/index.js'
+import { hasSupportingText, isRequired } from '../../helpers/index.js'
 
 type RadioGroupFieldRendererProps<TFieldValues extends FieldValues> = {
     config: RadioGroupFieldConfig

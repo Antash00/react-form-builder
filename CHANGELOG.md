@@ -7,6 +7,8 @@
 - Support text, number, checkbox, checkbox group, radio group, select, and autocomplete fields with validation and default values.
 - Preserve domain objects in selection values. Support single and multiple selection where applicable.
 - Add optional responsive field groups, form reset, and a typed submit callback.
-- Publish ESM and CommonJS builds with TypeScript declarations from the package root.
+- Keep `config` fixed for each mounted form; remount `FormBuilder` to switch configurations.
+- Reject reserved object keys as field accessors and prevent duplicate asynchronous submissions.
+- Publish ESM and CommonJS builds with NodeNext-compatible TypeScript declarations from the package root.
 
 This release provides the standalone form API. Rendering configured fields inside an existing React Hook Form context is planned for a later release. The API may change before `1.0`.

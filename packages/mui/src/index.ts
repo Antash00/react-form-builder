@@ -1,5 +1,5 @@
 export const VERSION = '0.1.0'
-export { FormBuilder } from './form-builder/'
+export { FormBuilder } from './form-builder/index.js'
 
 export type {
     TextFieldConfig,
@@ -10,6 +10,6 @@ export type {
     SelectFieldConfig,
     AutocompleteFieldConfig,
     FieldGroup,
-} from './types/'
-export type { InferFieldValue, InferFormValues } from './types/'
-export { defineConfig } from './helpers'
+} from './types/index.js'
+export type { InferFieldValue, InferFormValues } from './types/index.js'
+export { defineConfig } from './helpers/index.js'
