@@ -241,7 +241,7 @@ export const FormBuilder = <const TConfig extends readonly ItemField[]>({
                     </Grid>
                 )}
             </Stack>
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
                 <Button
                     variant="contained"
                     {...submitButtonProps}

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 — Live Playground
+
+- Publish the existing Playground on GitHub Pages with working example links and direct-page reloads.
+- Update the package version and exported `VERSION` to `0.1.1`. The library API and form behavior are unchanged.
+
 ## 0.1.0 — First public release
 
 - Add a standalone `FormBuilder` that connects typed field configuration to React Hook Form and MUI.

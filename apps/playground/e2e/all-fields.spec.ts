@@ -61,6 +61,8 @@ test('all-fields page exercises every supported field type', async ({ page }) =>
         'aria-current',
         'page',
     )
+    await page.reload()
+    await expect(page.getByRole('region', { name: 'All fields' })).toBeVisible()
 
     const allFields = page.getByRole('region', { name: 'All fields' })
     const submit = allFields.getByRole('button', { name: 'Submit' })

@@ -1,6 +1,6 @@
 {
     "name": "@antash00/form-builder-mui",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Typed, config-driven React forms with React Hook Form and MUI",
     "keywords": [
         "react",

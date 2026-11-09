@@ -2,6 +2,10 @@
 
 The package is published from `packages/mui`. The GitHub release tag must match its version exactly: version `0.1.1` uses tag `v0.1.1`.
 
+## Live Playground
+
+In the repository's **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. `.github/workflows/playground-pages.yml` then deploys the Playground on every push to `main` at https://antash00.github.io/react-form-builder/. GitHub requires this one-time Pages setting before the first workflow deployment.
+
 ## First release (`0.1.0`)
 
 An npm trusted publisher is configured from the package's settings page, so the first version must create that package. Sign in to the npm account that owns the `@antash00` scope and enable two-factor authentication. On a clean checkout of the release commit:
