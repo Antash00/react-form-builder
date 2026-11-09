@@ -11,10 +11,13 @@
         "material-ui",
         "typescript"
     ],
-    "homepage": "https://github.com/antash00/react-form-builder#readme",
-    "bugs": "https://github.com/antash00/react-form-builder/issues",
     "license": "MIT",
-    "repository": "https://github.com/antash00/react-form-builder",
+    "homepage": "https://github.com/Antash00/react-form-builder#readme",
+    "bugs": "https://github.com/Antash00/react-form-builder/issues",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Antash00/react-form-builder.git"
+    },
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
