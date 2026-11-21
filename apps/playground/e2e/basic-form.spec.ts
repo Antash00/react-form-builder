@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 test('validates an empty field and submits typed text', async ({ page }) => {
+    const invalidLogs: string[] = []
+    page.on('console', (message) => {
+        if (message.text().startsWith('Invalid:')) invalidLogs.push(message.text())
+    })
     await page.goto('/basic')
     const basic = page.getByRole('region', { name: 'Basic form' })
 
@@ -9,6 +13,7 @@ test('validates an empty field and submits typed text', async ({ page }) => {
     await expect(basic.getByRole('button', { name: 'Reset' })).toHaveCount(0)
     await basic.getByRole('button', { name: 'Save form' }).click()
     await expect(basic.getByText('Name is required')).toBeVisible()
+    await expect.poll(() => invalidLogs.length).toBe(1)
     await expect(name).toBeFocused()
 
     await name.fill('Ada')
@@ -41,4 +46,5 @@ test('validates an empty field and submits typed text', async ({ page }) => {
     await expect(basic.getByRole('status', { name: 'Submitted additional roles' })).toHaveText(
         'Editor, Reviewer',
     )
+    expect(invalidLogs).toHaveLength(4)
 })

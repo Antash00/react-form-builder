@@ -104,6 +104,9 @@ export const BasicForm = () => {
                     setSubmittedPrimaryRole(values.primaryRole?.name ?? null)
                     setSubmittedAdditionalRoles(values.additionalRoles.map((role) => role.name))
                 }}
+                onInvalid={(errors) => {
+                    console.log('Invalid:', errors)
+                }}
             />
             {submittedName !== null && <output aria-label="Submitted name">{submittedName}</output>}
             {submittedName !== null && (

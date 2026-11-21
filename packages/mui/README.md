@@ -19,9 +19,17 @@ pnpm add @antash00/form-builder-mui @mui/material @emotion/react @emotion/styled
 
 React and React DOM must also be present in the consuming application.
 
+With React 18, install `react-is` at the **exact same version** as `react` and
+override transitive `react-is` dependencies to that version, as required by
+[MUI's React 18 installation guidance](https://mui.com/material-ui/getting-started/installation/#react-18-and-below).
+For example, with React 18.3.1, install `react-is@18.3.1` and set your package
+manager's override or resolution for `react-is` to `18.3.1` in the consuming
+application. The same applies to React 18.2.0 with `react-is@18.2.0`.
+
 ## Current capabilities
 
-- `FormBuilder` creates a standalone React Hook Form form from `defineConfig(...)`.
+- `FormBuilder` creates a standalone React Hook Form form from a field config.
+  `defineConfig(...)` is optional and improves inference and config checking.
 - Field `properties` stay close to MUI props; the library controls form-owned
   props such as value, change and blur handlers.
 - `rules` connect supported React Hook Form validation to MUI error and required

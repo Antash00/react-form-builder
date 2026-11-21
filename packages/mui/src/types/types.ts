@@ -9,17 +9,14 @@ import type {
 } from '@mui/material'
 import type { CheckboxFieldProperties, TextFieldProperties } from './inputsProperties/index.js'
 
-export type NumberFieldProperties = TextFieldProperties extends infer TProps
-    ? TProps extends unknown
-        ? Omit<TProps, 'type' | 'multiline' | 'rows' | 'minRows' | 'maxRows'> & {
-              type?: never
-              multiline?: never
-              rows?: never
-              minRows?: never
-              maxRows?: never
-          }
-        : never
+type WithoutProps<TProps, TKeys extends PropertyKey> = TProps extends unknown
+    ? Omit<TProps, TKeys> & { [TKey in TKeys]?: never }
     : never
+
+export type NumberFieldProperties = WithoutProps<
+    TextFieldProperties,
+    'type' | 'multiline' | 'rows' | 'minRows' | 'maxRows'
+>
 
 export type BaseFieldConfig<TAccessor extends string = string, TType extends string = string> = {
     accessor: TAccessor
@@ -33,14 +30,15 @@ export type FieldGroup<TAccessor extends string = string> = {
     columns: GridProps['columns']
     gap?: GridProps['spacing']
 }
+
 export type TextFieldConfig<TAccessor extends string = string> = BaseFieldConfig<
     TAccessor,
     'text'
 > & {
     properties?: TextFieldProperties
-
     rules?: Pick<RegisterOptions, 'required' | 'minLength' | 'maxLength' | 'pattern'>
 }
+
 export type NumberFieldConfig<TAccessor extends string = string> = BaseFieldConfig<
     TAccessor,
     'number'
@@ -48,6 +46,7 @@ export type NumberFieldConfig<TAccessor extends string = string> = BaseFieldConf
     properties?: NumberFieldProperties
     rules?: Pick<RegisterOptions, 'required' | 'min' | 'max'>
 }
+
 export type CheckboxFieldConfig<TAccessor extends string = string> = BaseFieldConfig<
     TAccessor,
     'checkbox'
@@ -56,14 +55,14 @@ export type CheckboxFieldConfig<TAccessor extends string = string> = BaseFieldCo
     rules?: Pick<RegisterOptions, 'required'>
 }
 
+type ControlledCheckboxGroupProps =
+    'children' | 'onChange' | 'onBlur' | 'id' | 'className' | 'role' | 'aria-labelledby'
+
 export type CheckboxGroupFieldConfig<
     TItem = unknown,
     TAccessor extends string = string,
 > = BaseFieldConfig<TAccessor, 'checkboxGroup'> & {
-    properties: Omit<
-        FormGroupProps,
-        'children' | 'onChange' | 'onBlur' | 'id' | 'className' | 'role' | 'aria-labelledby'
-    > & {
+    properties: WithoutProps<FormGroupProps, ControlledCheckboxGroupProps> & {
         items: readonly TItem[]
         label: ReactNode
         helperText?: ReactNode
@@ -74,24 +73,24 @@ export type CheckboxGroupFieldConfig<
     rules?: Pick<RegisterOptions, 'required'>
 }
 
+type ControlledRadioGroupProps =
+    | 'children'
+    | 'value'
+    | 'defaultValue'
+    | 'onChange'
+    | 'onBlur'
+    | 'name'
+    | 'ref'
+    | 'id'
+    | 'className'
+    | 'aria-labelledby'
+    | 'aria-describedby'
+
 export type RadioGroupFieldConfig<
     TItem = unknown,
     TAccessor extends string = string,
 > = BaseFieldConfig<TAccessor, 'radioGroup'> & {
-    properties: Omit<
-        RadioGroupProps,
-        | 'children'
-        | 'value'
-        | 'defaultValue'
-        | 'onChange'
-        | 'onBlur'
-        | 'name'
-        | 'ref'
-        | 'id'
-        | 'className'
-        | 'aria-labelledby'
-        | 'aria-describedby'
-    > & {
+    properties: WithoutProps<RadioGroupProps, ControlledRadioGroupProps> & {
         items: readonly TItem[]
         label: ReactNode
         helperText?: ReactNode
@@ -128,13 +127,7 @@ type ControlledSelectProps =
     | 'aria-labelledby'
 
 // Preserve MUI's variant-specific props while preventing overrides of form wiring.
-type SelectProperties = SelectProps extends infer TProps
-    ? TProps extends unknown
-        ? Omit<TProps, ControlledSelectProps> & {
-              [TKey in ControlledSelectProps]?: never
-          }
-        : never
-    : never
+type SelectProperties = WithoutProps<SelectProps, ControlledSelectProps>
 
 type SelectFieldProperties<TItem> = SelectProperties & {
     items: readonly TItem[]
@@ -187,50 +180,27 @@ export type AutocompleteFieldConfig<
         | { properties: AutocompleteFieldProperties<TItem> & { multiple?: false } }
     )
 
-// The broad union accepts each group's own item type; defineConfig checks its callbacks against items.
-type AnyCheckboxGroupField<TAccessor extends string> = Omit<
-    CheckboxGroupFieldConfig<unknown, TAccessor>,
-    'properties'
-> & {
-    properties: Omit<
-        CheckboxGroupFieldConfig<unknown>['properties'],
-        'getItemLabel' | 'getItemKey'
-    > & {
-        getItemLabel(item: unknown): ReactNode
-        getItemKey(item: unknown): string | number
-    }
-}
+type AnySelectableField<TField> = TField extends { properties: infer TProperties }
+    ? Omit<TField, 'properties'> & {
+          properties: Omit<TProperties, 'getItemLabel' | 'getItemKey'> & {
+              getItemLabel(item: unknown): ReactNode
+              getItemKey(item: unknown): string | number
+          }
+      }
+    : never
 
-type AnyRadioGroupField<TAccessor extends string> = Omit<
-    RadioGroupFieldConfig<unknown, TAccessor>,
-    'properties'
-> & {
-    properties: Omit<
-        RadioGroupFieldConfig<unknown>['properties'],
-        'getItemLabel' | 'getItemKey'
-    > & {
-        getItemLabel(item: unknown): ReactNode
-        getItemKey(item: unknown): string | number
-    }
-}
+type AnyCheckboxGroupField<TAccessor extends string> = AnySelectableField<
+    CheckboxGroupFieldConfig<unknown, TAccessor>
+>
+type AnyRadioGroupField<TAccessor extends string> = AnySelectableField<
+    RadioGroupFieldConfig<unknown, TAccessor>
+>
+type AnySelectField<TAccessor extends string> = AnySelectableField<
+    SelectFieldConfig<unknown, TAccessor>
+>
 
-type AnySelectField<TAccessor extends string> =
-    SelectFieldConfig<unknown, TAccessor> extends infer TField
-        ? TField extends { properties: infer TProperties }
-            ? Omit<TField, 'properties'> & {
-                  properties: Omit<TProperties, 'getItemLabel' | 'getItemKey'> & {
-                      getItemLabel(item: unknown): ReactNode
-                      getItemKey(item: unknown): string | number
-                  }
-              }
-            : never
-        : never
-
-// This constraint keeps item callbacks assignable for annotated configs. defineConfig
-// validates the full MUI property surface against each field's actual item type.
 type AnyAutocompleteField<TAccessor extends string> = BaseFieldConfig<TAccessor, 'autocomplete'> & {
     properties: {
-        [property: string]: unknown
         options: readonly unknown[]
         label: string
         helperText?: ReactNode

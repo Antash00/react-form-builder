@@ -1,6 +1,6 @@
 {
     "name": "@antash00/form-builder-mui",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "Typed, config-driven React forms with React Hook Form and MUI",
     "keywords": [
         "react",
@@ -66,9 +66,9 @@
     "peerDependencies": {
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
-        "@mui/material": "^9.4.0",
-        "react": "^19.3.0",
-        "react-dom": "^19.3.0",
-        "react-hook-form": "^7.89.0"
+        "@mui/material": "^9.2.0",
+        "react": "^18.2.0 || ^19.0.0",
+        "react-dom": "^18.2.0 || ^19.0.0",
+        "react-hook-form": "^7.84.0"
     }
 }

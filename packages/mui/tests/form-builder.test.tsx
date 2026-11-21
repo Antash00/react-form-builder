@@ -6,6 +6,37 @@ import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
 
 afterEach(cleanup)
 
+test('calls onInvalid with RHF errors for each failed submit and skips it after success', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const onInvalid = vi.fn()
+    const config = defineConfig([
+        {
+            accessor: 'name',
+            type: 'text',
+            properties: { label: 'Name' },
+            rules: { required: 'Enter a name' },
+        },
+    ])
+    render(<FormBuilder config={config} onSubmit={onSubmit} onInvalid={onInvalid} />)
+
+    const submit = screen.getByRole('button', { name: 'Submit' })
+    await user.click(submit)
+    await waitFor(() => expect(onInvalid).toHaveBeenCalledTimes(1))
+    expect(onInvalid.mock.calls[0][0]).toMatchObject({
+        name: { type: 'required', message: 'Enter a name' },
+    })
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    await user.click(submit)
+    await waitFor(() => expect(onInvalid).toHaveBeenCalledTimes(2))
+
+    await user.type(screen.getByRole('textbox', { name: /Name/ }), 'Ada')
+    await user.click(submit)
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onInvalid).toHaveBeenCalledTimes(2)
+})
+
 test('customizes action buttons while keeping submit and reset behavior', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()

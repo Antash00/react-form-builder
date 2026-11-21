@@ -1,5 +1,5 @@
-import { type DefaultValues, type SubmitHandler, useForm } from 'react-hook-form'
-import { type SubmitEventHandler, useRef } from 'react'
+import { type SubmitErrorHandler, type SubmitHandler, useForm } from 'react-hook-form'
+import { type SubmitEventHandler, useRef, useState } from 'react'
 import type { FieldGroup, InferFormResult, InferFormValues, ItemField } from '../types/index.js'
 import { TextFieldRenderer } from '../fields/text/index.js'
 import { assertValidAccessors, buildFormResult } from '../helpers/index.js'
@@ -10,6 +10,8 @@ import { NumberFieldRenderer } from '../fields/number/index.js'
 import { AutocompleteFieldRenderer } from '../fields/autocomplete/index.js'
 import { RadioGroupFieldRenderer } from '../fields/radio-group/index.js'
 import { Button, Grid, Stack, type ButtonProps } from '@mui/material'
+import { buildInitialValues } from './initial-values.js'
+import { resolveFieldGroups } from './resolve-field-groups.js'
 
 type ControlledButtonProps = 'type' | 'href' | 'component' | 'form'
 type ActionButtonProps = Omit<ButtonProps, ControlledButtonProps> & {
@@ -27,76 +29,7 @@ type FormBuilderProps<TConfig extends readonly ItemField[]> = {
         values: InferFormValues<TConfig>,
         result: InferFormResult<TConfig>,
     ) => void | Promise<void>
-}
-
-function buildInitialValues<TConfig extends readonly ItemField[]>(
-    config: TConfig,
-    defaultValues?: Partial<InferFormValues<TConfig>>,
-): DefaultValues<InferFormValues<TConfig>> {
-    const providedValues = new Map(Object.entries(defaultValues ?? {}))
-    const initialValues: Record<string, unknown> = {}
-    for (const field of config) {
-        const value = providedValues.get(field.accessor)
-        switch (field.type) {
-            case 'text':
-                initialValues[field.accessor] = typeof value === 'string' ? value : ''
-                break
-            case 'number':
-                initialValues[field.accessor] = typeof value === 'number' ? value : null
-                break
-            case 'checkbox':
-                initialValues[field.accessor] = typeof value === 'boolean' ? value : false
-                break
-            case 'checkboxGroup':
-                initialValues[field.accessor] = Array.isArray(value)
-                    ? field.properties.items.filter((item) =>
-                          value.some(
-                              (selected) =>
-                                  field.properties.getItemKey(selected) ===
-                                  field.properties.getItemKey(item),
-                          ),
-                      )
-                    : []
-                break
-            case 'radioGroup':
-                initialValues[field.accessor] =
-                    field.properties.items.find(
-                        (item) =>
-                            value != null &&
-                            field.properties.getItemKey(item) ===
-                                field.properties.getItemKey(value),
-                    ) ?? null
-                break
-            case 'select':
-                initialValues[field.accessor] = field.properties.multiple
-                    ? Array.isArray(value)
-                        ? field.properties.items.filter((item) =>
-                              value.some(
-                                  (selected) =>
-                                      field.properties.getItemKey(selected) ===
-                                      field.properties.getItemKey(item),
-                              ),
-                          )
-                        : []
-                    : (field.properties.items.find(
-                          (item) =>
-                              value != null &&
-                              field.properties.getItemKey(item) ===
-                                  field.properties.getItemKey(value),
-                      ) ?? null)
-                break
-            case 'autocomplete':
-                initialValues[field.accessor] = field.properties.multiple
-                    ? Array.isArray(value)
-                        ? value
-                        : []
-                    : (value ?? null)
-                break
-        }
-    }
-
-    // Every configured field has an initialized value matching its field type.
-    return initialValues as DefaultValues<InferFormValues<TConfig>>
+    onInvalid?: SubmitErrorHandler<InferFormValues<TConfig>>
 }
 
 export const FormBuilder = <const TConfig extends readonly ItemField[]>({
@@ -106,10 +39,12 @@ export const FormBuilder = <const TConfig extends readonly ItemField[]>({
     submitButtonProps,
     resetButtonProps,
     onSubmit,
+    onInvalid,
 }: FormBuilderProps<TConfig>) => {
     type FormValues = InferFormValues<TConfig>
 
     assertValidAccessors(config)
+    const [initialValues] = useState(() => buildInitialValues(config, defaultValues))
     const submittingRef = useRef(false)
     const {
         control,
@@ -117,7 +52,7 @@ export const FormBuilder = <const TConfig extends readonly ItemField[]>({
         reset,
         formState: { isSubmitting },
     } = useForm<FormValues>({
-        defaultValues: buildInitialValues(config, defaultValues),
+        defaultValues: initialValues,
     })
 
     const handleFormSubmit: SubmitHandler<FormValues> = async (values) => {
@@ -125,7 +60,7 @@ export const FormBuilder = <const TConfig extends readonly ItemField[]>({
         await onSubmit(values, result)
     }
 
-    const submit = handleSubmit(handleFormSubmit)
+    const submit = handleSubmit(handleFormSubmit, onInvalid)
     const handleFormEvent: SubmitEventHandler<HTMLFormElement> = async (event) => {
         if (submittingRef.current) {
             event.preventDefault()
@@ -142,81 +77,25 @@ export const FormBuilder = <const TConfig extends readonly ItemField[]>({
     const renderField = (field: TConfig[number]) => {
         switch (field.type) {
             case 'text':
-                return (
-                    <TextFieldRenderer<FormValues>
-                        key={field.accessor}
-                        config={field}
-                        control={control}
-                    />
-                )
+                return <TextFieldRenderer<FormValues> config={field} control={control} />
             case 'number':
-                return (
-                    <NumberFieldRenderer<FormValues>
-                        key={field.accessor}
-                        config={field}
-                        control={control}
-                    />
-                )
+                return <NumberFieldRenderer<FormValues> config={field} control={control} />
             case 'checkbox':
-                return (
-                    <CheckboxFieldRenderer<FormValues>
-                        key={field.accessor}
-                        config={field}
-                        control={control}
-                    />
-                )
+                return <CheckboxFieldRenderer<FormValues> config={field} control={control} />
             case 'checkboxGroup':
-                return (
-                    <CheckboxGroupFieldRenderer<FormValues>
-                        key={field.accessor}
-                        config={field}
-                        control={control}
-                    />
-                )
+                return <CheckboxGroupFieldRenderer<FormValues> config={field} control={control} />
             case 'radioGroup':
-                return (
-                    <RadioGroupFieldRenderer<FormValues>
-                        key={field.accessor}
-                        config={field}
-                        control={control}
-                    />
-                )
+                return <RadioGroupFieldRenderer<FormValues> config={field} control={control} />
             case 'select':
-                return (
-                    <SelectFieldRenderer<FormValues>
-                        key={field.accessor}
-                        config={field}
-                        control={control}
-                    />
-                )
+                return <SelectFieldRenderer<FormValues> config={field} control={control} />
             case 'autocomplete':
-                return (
-                    <AutocompleteFieldRenderer<FormValues>
-                        key={field.accessor}
-                        config={field}
-                        control={control}
-                    />
-                )
+                return <AutocompleteFieldRenderer<FormValues> config={field} control={control} />
+            default:
+                throw new Error(`Unsupported field: ${JSON.stringify(field satisfies never)}`)
         }
     }
 
-    const fieldsByAccessor = new Map(config.map((field) => [field.accessor, field]))
-    const groupedAccessors = new Set<string>()
-    const groupedFields = groups?.map((group) => {
-        const fields = group.fields.map((accessor) => {
-            const field = fieldsByAccessor.get(accessor)
-            if (!field) {
-                throw new Error(`Unknown group field "${accessor}": no matching field in config`)
-            }
-            if (groupedAccessors.has(accessor)) {
-                throw new Error(`Duplicate group field "${accessor}": each field can appear once`)
-            }
-            groupedAccessors.add(accessor)
-            return field
-        })
-        return { group, fields }
-    })
-    const ungroupedFields = config.filter((field) => !groupedAccessors.has(field.accessor))
+    const { groupedFields, ungroupedFields } = resolveFieldGroups(config, groups)
     const resetProps = resetButtonProps === false ? null : resetButtonProps
 
     return (

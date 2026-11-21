@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import type { DefaultValues } from 'react-hook-form'
+import type { DefaultValues, FieldErrors } from 'react-hook-form'
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd'
 import {
     defineConfig,
@@ -43,6 +43,10 @@ expectType<JSX.Element>(
             expectType<'text'>(result.name.type)
             expectType<string>(result.name.value)
             expectNotAssignable<keyof typeof submitted>('missing')
+        }}
+        onInvalid={(errors) => {
+            expectType<FieldErrors<InferFormValues<typeof config>>>(errors)
+            expectNotAssignable<keyof typeof errors>('missing')
         }}
     />,
 )
@@ -228,6 +232,14 @@ expectNotAssignable<CheckboxGroupFieldConfig<Role>>({
         getItemKey: (item: Role) => item.id,
     },
 })
+const invalidGroupProperties = {
+    label: 'Roles',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+    children: 'Outside FormBuilder',
+}
+expectNotAssignable<CheckboxGroupFieldConfig<Role>['properties']>(invalidGroupProperties)
 defineConfig([
     {
         accessor: 'roles',
@@ -291,6 +303,14 @@ expectNotAssignable<RadioGroupFieldConfig<Role>['properties']>({
     getItemKey: (item: Role) => item.id,
     value: '1',
 })
+const invalidRadioProperties = {
+    label: 'Primary role',
+    items: roles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+    value: '1',
+}
+expectNotAssignable<RadioGroupFieldConfig<Role>['properties']>(invalidRadioProperties)
 defineConfig([
     {
         accessor: 'primaryRole',
@@ -549,6 +569,26 @@ const annotatedAutocompleteConfig = defineConfig([annotatedAutocomplete])
 expectAssignable<readonly AutocompleteFieldConfig<Role, 'role'>[]>(annotatedAutocompleteConfig)
 declare const annotatedAutocompleteValues: InferFormValues<typeof annotatedAutocompleteConfig>
 expectType<Role | null>(annotatedAutocompleteValues.role)
+expectType<JSX.Element>(
+    <FormBuilder
+        config={[annotatedAutocomplete]}
+        onSubmit={(submitted) => expectType<Role | null>(submitted.role)}
+    />,
+)
+const directConfigWithUnknownAutocompleteProp = [
+    {
+        accessor: 'role',
+        type: 'autocomplete',
+        properties: {
+            label: 'Role',
+            options: roles,
+            getOptionLabel: (role: Role) => role.name,
+            // @ts-expect-error autocomplete properties must be supported by MUI
+            inventedProperty: true,
+        },
+    },
+] satisfies Parameters<typeof FormBuilder>[0]['config']
+expectType<boolean>(directConfigWithUnknownAutocompleteProp[0].properties.inventedProperty)
 
 const annotatedMultiAutocomplete: AutocompleteFieldConfig<Role, 'roles'> = {
     accessor: 'roles',
