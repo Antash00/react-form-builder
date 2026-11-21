@@ -5,7 +5,7 @@ submission wiring. React Form Builder MUI speeds up building those forms: descri
 the fields in a typed config, and the library connects React Hook Form to Material
 UI, renders the inputs, shows validation errors, and infers submitted value types.
 
-The current release is `0.1.1`. The API may change before `1.0`.
+The current package version is `0.2.0`. The API may change before `1.0`.
 
 [Live Playground](https://antash00.github.io/react-form-builder/) shows the working examples.
 
@@ -18,7 +18,7 @@ pnpm add @antash00/form-builder-mui @mui/material @emotion/react @emotion/styled
 React and React DOM must also be present in the consuming application.
 
 See the [package README](packages/mui/README.md) for a complete example and
-[release notes](CHANGELOG.md) for changes in `0.1.1`.
+the [release notes](CHANGELOG.md) for version history.
 
 Licensed under [MIT](LICENSE).
 
@@ -26,11 +26,13 @@ Maintainer instructions for npm publication are in [docs/releasing.md](docs/rele
 
 ## Current capabilities
 
-- `FormBuilder` creates a standalone React Hook Form form from `defineConfig(...)`.
+- `FormBuilder` creates a standalone React Hook Form form from a field config.
+  `defineConfig(...)` is optional and improves inference and config checking.
 - Field `properties` stay close to MUI props; the library controls form-owned
   props such as value, change and blur handlers.
 - `rules` connect supported React Hook Form validation to MUI error and required
   states.
+- `onInvalid` receives typed validation errors when submission fails validation.
 - `defaultValues` initialize forms for editing existing data. You may omit fields,
   but each supplied value must match its complete field type. Unavailable select
   and group choices are discarded before validation.

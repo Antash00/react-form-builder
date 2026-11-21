@@ -5,7 +5,7 @@ submission wiring. React Form Builder MUI speeds up building those forms: descri
 the fields in a typed config, and the library connects React Hook Form to Material
 UI, renders the inputs, shows validation errors, and infers submitted value types.
 
-The current release is `0.1.1`. The API may change before `1.0`.
+The current package version is `0.2.0`. The API may change before `1.0`.
 
 [Live Playground](https://antash00.github.io/react-form-builder/) shows the working examples.
 
@@ -34,6 +34,7 @@ application. The same applies to React 18.2.0 with `react-is@18.2.0`.
   props such as value, change and blur handlers.
 - `rules` connect supported React Hook Form validation to MUI error and required
   states.
+- `onInvalid` receives typed React Hook Form errors when submission fails validation.
 - `defaultValues` initialize forms for editing existing data. You may omit fields,
   but each supplied value must match its complete field type. Unavailable select
   and group choices are discarded before validation.
@@ -168,6 +169,8 @@ instances from `items` when their keys match. For autocomplete, pass
 while choices load asynchronously; FormBuilder keeps that value. `emptyLabel`
 adds a clear option to a single select. The optional
 second submit argument contains each field's type and value.
+Pass `onInvalid={(errors) => { ... }}` to handle validation errors; its field
+names are inferred from `config`.
 
 The action buttons default to **Submit** and **Reset**. Pass MUI button props to
 change their labels through `children` or customize their appearance. The builder

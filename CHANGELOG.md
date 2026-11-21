@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — Typed validation errors
+
+- Add an optional `onInvalid` callback with validation errors inferred from the field config.
+- Tighten field configuration types: reject form-controlled group props and remove the arbitrary autocomplete property index signature. `defineConfig` remains optional.
+- Initialize default values once per mounted form and simplify selection matching and field-group resolution without changing their intended behavior.
+- Expand peer dependency support to React 18 and 19, MUI 9.2+, and React Hook Form 7.84+.
+
 ## 0.1.1 — Live Playground
 
 - Publish the existing Playground on GitHub Pages with working example links and direct-page reloads.
