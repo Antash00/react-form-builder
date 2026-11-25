@@ -1,19 +1,14 @@
-import { useState } from 'react'
-import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
+import { basicRoles } from '../variables/catalog'
+import { FormBuilder, defineConfig } from '@antash00/form-builder-mui'
+import type { FormCallbacks } from '../useFormOutput'
 
-type Role = { id: number; name: string }
-const roles: Role[] = [
-    { id: 1, name: 'Editor' },
-    { id: 2, name: 'Reviewer' },
-    { id: 3, name: 'Publisher' },
-    { id: 4, name: 'Translator' },
-    { id: 5, name: 'Analyst' },
-    { id: 6, name: 'Designer' },
-    { id: 7, name: 'Support' },
-    { id: 8, name: 'Auditor' },
-    { id: 9, name: 'Administrator' },
-    { id: 10, name: 'Approver' },
-]
+type Role = (typeof basicRoles)[number]
+
+const roleOptions = {
+    items: basicRoles,
+    getItemLabel: (item: Role) => item.name,
+    getItemKey: (item: Role) => item.id,
+}
 
 const config = defineConfig([
     {
@@ -49,9 +44,7 @@ const config = defineConfig([
         type: 'checkboxGroup',
         properties: {
             label: 'Roles',
-            items: roles,
-            getItemLabel: (item: Role) => item.name,
-            getItemKey: (item: Role) => item.id,
+            ...roleOptions,
         },
         rules: { required: 'Choose at least one role' },
     },
@@ -63,9 +56,7 @@ const config = defineConfig([
             helperText: 'Choose your main role',
             fullWidth: true,
             variant: 'filled',
-            items: roles,
-            getItemLabel: (item: Role) => item.name,
-            getItemKey: (item: Role) => item.id,
+            ...roleOptions,
         },
         rules: { required: 'Choose a primary role' },
     },
@@ -78,48 +69,18 @@ const config = defineConfig([
             multiple: true,
             fullWidth: true,
             variant: 'filled',
-            items: roles,
-            getItemLabel: (item: Role) => item.name,
-            getItemKey: (item: Role) => item.id,
+            ...roleOptions,
         },
     },
 ])
-
-export const BasicForm = () => {
-    const [submittedName, setSubmittedName] = useState<string | null>(null)
-    const [submittedRoles, setSubmittedRoles] = useState<string[]>([])
-    const [submittedPrimaryRole, setSubmittedPrimaryRole] = useState<string | null>(null)
-    const [submittedAdditionalRoles, setSubmittedAdditionalRoles] = useState<string[]>([])
-
+export function BasicForm({ onSubmit, onInvalid }: FormCallbacks) {
     return (
-        <>
-            <FormBuilder
-                config={config}
-                submitButtonProps={{ children: 'Save form', color: 'success' }}
-                resetButtonProps={false}
-                onSubmit={(values, result) => {
-                    console.log('Basic form submit', { values, result })
-                    setSubmittedName(values.name)
-                    setSubmittedRoles(values.roles.map((role) => role.name))
-                    setSubmittedPrimaryRole(values.primaryRole?.name ?? null)
-                    setSubmittedAdditionalRoles(values.additionalRoles.map((role) => role.name))
-                }}
-                onInvalid={(errors) => {
-                    console.log('Invalid:', errors)
-                }}
-            />
-            {submittedName !== null && <output aria-label="Submitted name">{submittedName}</output>}
-            {submittedName !== null && (
-                <output aria-label="Submitted roles">{submittedRoles.join(', ')}</output>
-            )}
-            {submittedPrimaryRole !== null && (
-                <output aria-label="Submitted primary role">{submittedPrimaryRole}</output>
-            )}
-            {submittedName !== null && (
-                <output aria-label="Submitted additional roles">
-                    {submittedAdditionalRoles.join(', ')}
-                </output>
-            )}
-        </>
+        <FormBuilder
+            config={config}
+            submitButtonProps={{ children: 'Save form', color: 'success' }}
+            resetButtonProps={false}
+            onSubmit={onSubmit}
+            onInvalid={onInvalid}
+        />
     )
 }

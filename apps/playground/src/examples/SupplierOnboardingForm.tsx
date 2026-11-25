@@ -1,34 +1,18 @@
-import { useState } from 'react'
-import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
+import { type FieldGroup, FormBuilder, defineConfig } from '@antash00/form-builder-mui'
+import type { FormCallbacks } from '../useFormOutput'
 import {
-    type Choice,
     countries,
     currencies,
-    getId,
-    getName,
     industries,
     managers,
     regions,
-    sameChoice,
     supplierCategories,
-} from './catalog'
+    paymentTerms,
+    contractTypes,
+} from '../variables/catalog'
+import { supplierOnboardingDefaults } from '../variables/defaultValues'
 
-const paymentTerms: Choice[] = [
-    { id: 'prepaid', name: 'Prepaid' },
-    { id: 'net-15', name: 'Net 15' },
-    { id: 'net-30', name: 'Net 30' },
-    { id: 'net-45', name: 'Net 45' },
-    { id: 'net-60', name: 'Net 60' },
-    { id: 'milestone', name: 'Milestone billing' },
-]
-
-const contractTypes: Choice[] = [
-    { id: 'master', name: 'Master services agreement' },
-    { id: 'purchase', name: 'Purchase order' },
-    { id: 'subscription', name: 'Subscription' },
-    { id: 'statement', name: 'Statement of work' },
-    { id: 'one-time', name: 'One-time purchase' },
-]
+type Option = { id: string; name: string }
 
 const emailRule = {
     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -91,8 +75,8 @@ const config = defineConfig([
             label: 'Industry',
             fullWidth: true,
             items: industries,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose an industry' },
     },
@@ -103,8 +87,8 @@ const config = defineConfig([
             label: 'Country',
             fullWidth: true,
             items: countries,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose a country' },
     },
@@ -178,8 +162,8 @@ const config = defineConfig([
             label: 'Billing currency',
             fullWidth: true,
             items: currencies,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose a billing currency' },
     },
@@ -190,8 +174,8 @@ const config = defineConfig([
             label: 'Payment terms',
             fullWidth: true,
             items: paymentTerms,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose payment terms' },
     },
@@ -222,8 +206,8 @@ const config = defineConfig([
             multiple: true,
             fullWidth: true,
             options: supplierCategories,
-            getOptionLabel: getName,
-            isOptionEqualToValue: sameChoice,
+            getOptionLabel: (item: Option) => item.name,
+            isOptionEqualToValue: (option: Option, value: Option) => option.id === value.id,
         },
         rules: { required: 'Choose at least one category' },
     },
@@ -235,8 +219,8 @@ const config = defineConfig([
             multiple: true,
             fullWidth: true,
             items: regions,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
     },
     {
@@ -246,8 +230,8 @@ const config = defineConfig([
             label: 'Internal account owner',
             fullWidth: true,
             options: managers,
-            getOptionLabel: getName,
-            isOptionEqualToValue: sameChoice,
+            getOptionLabel: (item: Option) => item.name,
+            isOptionEqualToValue: (option: Option, value: Option) => option.id === value.id,
         },
         rules: { required: 'Choose an account owner' },
     },
@@ -258,8 +242,8 @@ const config = defineConfig([
             label: 'Contract type',
             fullWidth: true,
             items: contractTypes,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose a contract type' },
     },
@@ -288,59 +272,56 @@ const config = defineConfig([
     },
 ])
 
-export function SupplierOnboardingForm() {
-    const [submitted, setSubmitted] = useState<string | null>(null)
+const groups = [
+    {
+        fields: [
+            'legalName',
+            'tradingName',
+            'registrationNumber',
+            'taxId',
+            'website',
+            'yearFounded',
+            'industry',
+            'country',
+            'stateProvince',
+            'city',
+            'postalCode',
+            'addressLine1',
+            'addressLine2',
+        ],
+        columns: { xs: 1, sm: 2 },
+        gap: 2,
+    },
+    {
+        fields: ['primaryContact', 'contactTitle', 'contactEmail', 'contactPhone', 'supportEmail'],
+        columns: { xs: 1, sm: 2 },
+        gap: 2,
+    },
+    {
+        fields: [
+            'currency',
+            'paymentTerms',
+            'annualSpend',
+            'leadTimeDays',
+            'categories',
+            'regions',
+            'accountOwner',
+            'contractType',
+            'insuranceCoverage',
+        ],
+        columns: { xs: 1, sm: 2 },
+        gap: 2,
+    },
+] satisfies FieldGroup<(typeof config)[number]['accessor']>[]
 
+export function SupplierOnboardingForm({ onSubmit, onInvalid }: FormCallbacks) {
     return (
-        <>
-            <p>
-                Review a saved supplier draft. This 30-field form covers company identity, contacts,
-                billing, service scope and compliance.
-            </p>
-            <FormBuilder
-                config={config}
-                defaultValues={{
-                    legalName: '',
-                    tradingName: '',
-                    registrationNumber: 'ACME-2026',
-                    taxId: 'US123456789',
-                    website: '',
-                    yearFounded: null,
-                    industry: industries[0],
-                    country: countries[14],
-                    stateProvince: 'New York',
-                    city: 'New York',
-                    postalCode: '10001',
-                    addressLine1: '100 Market Street',
-                    addressLine2: '',
-                    primaryContact: 'Dana Lewis',
-                    contactTitle: '',
-                    contactEmail: 'dana@example.com',
-                    contactPhone: '+1 212 555 0198',
-                    supportEmail: '',
-                    currency: currencies[9],
-                    paymentTerms: paymentTerms[2],
-                    annualSpend: 125000,
-                    leadTimeDays: null,
-                    categories: [supplierCategories[9]],
-                    regions: [regions[0]],
-                    accountOwner: managers[1],
-                    contractType: contractTypes[0],
-                    insuranceCoverage: null,
-                    dataProcessing: false,
-                    complianceApproved: false,
-                    notes: '',
-                }}
-                onSubmit={(values, result) => {
-                    console.log('Supplier onboarding submit', { values, result })
-                    setSubmitted(JSON.stringify(values, null, 2))
-                }}
-            />
-            {submitted !== null && (
-                <pre aria-label="Submitted values" className="submission-output">
-                    {submitted}
-                </pre>
-            )}
-        </>
+        <FormBuilder
+            config={config}
+            groups={groups}
+            defaultValues={supplierOnboardingDefaults}
+            onSubmit={onSubmit}
+            onInvalid={onInvalid}
+        />
     )
 }

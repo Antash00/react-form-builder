@@ -1,0 +1,102 @@
+import {
+    departments,
+    teams,
+    offices,
+    managers,
+    costCenters,
+    equipment,
+    accessGroups,
+    industries,
+    countries,
+    currencies,
+    supplierCategories,
+    regions,
+    allFieldRoles,
+    employmentTypes,
+    paymentTerms,
+    contractTypes,
+} from './catalog'
+
+export const allFieldsDefaults = {
+    name: '',
+    email: '',
+    budget: 0,
+    notes: 'Existing note',
+    confirmed: false,
+    roles: [],
+    primaryRole: null,
+    approvalRole: null,
+    additionalRoles: [allFieldRoles[1]],
+    searchRole: null,
+    searchRoles: [],
+}
+
+export const savedProject = {
+    name: 'Website refresh',
+    owner: { id: 'design', name: 'Design' },
+    contributors: [{ id: 'engineering', name: 'Engineering' }],
+    reviewer: { id: 'operations', name: 'Operations' },
+}
+
+export const selectCasesDefaults = {
+    reviewer: { id: 0, name: 'Operations' },
+    teams: [{ id: 1, name: 'Design' }],
+}
+
+export const employeeOnboardingDefaults = {
+    firstName: '',
+    lastName: 'Rivera',
+    preferredName: '',
+    workEmail: 'sam.rivera@example.com',
+    phone: '+1 202 555 0187',
+    employeeId: 'HR-2048',
+    jobTitle: 'Operations Analyst',
+    startDate: '2026-11-03',
+    employmentType: employmentTypes[0],
+    department: departments[3],
+    team: teams[0],
+    office: offices[7],
+    manager: managers[0],
+    costCenter: costCenters[3],
+    salary: 85000,
+    weeklyHours: 40,
+    equipment: [equipment[0], equipment[1]],
+    accessGroups: [accessGroups[0]],
+    policyAccepted: false,
+    notes: '',
+}
+
+export const supplierOnboardingDefaults = {
+    legalName: '',
+    tradingName: '',
+    registrationNumber: 'ACME-2026',
+    taxId: 'US123456789',
+    website: '',
+    yearFounded: null,
+    industry: industries[0],
+    country: countries[14],
+    stateProvince: 'New York',
+    city: 'New York',
+    postalCode: '10001',
+    addressLine1: '100 Market Street',
+    addressLine2: '',
+    primaryContact: 'Dana Lewis',
+    contactTitle: '',
+    contactEmail: 'dana@example.com',
+    contactPhone: '+1 212 555 0198',
+    supportEmail: '',
+    currency: currencies[9],
+    paymentTerms: paymentTerms[2],
+    annualSpend: 125000,
+    leadTimeDays: null,
+    categories: [supplierCategories[9]],
+    regions: [regions[0]],
+    accountOwner: managers[1],
+    contractType: contractTypes[0],
+    insuranceCoverage: null,
+    dataProcessing: false,
+    complianceApproved: false,
+    notes: '',
+}
+
+export const workspaceDefaults = { name: 'Design systems', private: true }

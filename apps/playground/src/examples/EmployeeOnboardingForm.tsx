@@ -1,25 +1,18 @@
-import { useState } from 'react'
-import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
+import { type FieldGroup, FormBuilder, defineConfig } from '@antash00/form-builder-mui'
+import type { FormCallbacks } from '../useFormOutput'
 import {
-    type Choice,
     accessGroups,
     costCenters,
     departments,
     equipment,
-    getId,
-    getName,
     managers,
     offices,
-    sameChoice,
     teams,
-} from './catalog'
+    employmentTypes,
+} from '../variables/catalog'
+import { employeeOnboardingDefaults } from '../variables/defaultValues'
 
-const employmentTypes: Choice[] = [
-    { id: 'full-time', name: 'Full-time employee' },
-    { id: 'part-time', name: 'Part-time employee' },
-    { id: 'contractor', name: 'Contractor' },
-    { id: 'intern', name: 'Intern' },
-]
+type Option = { id: string; name: string }
 
 const config = defineConfig([
     {
@@ -98,8 +91,8 @@ const config = defineConfig([
             label: 'Employment type',
             fullWidth: true,
             items: employmentTypes,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose an employment type' },
     },
@@ -110,8 +103,8 @@ const config = defineConfig([
             label: 'Department',
             fullWidth: true,
             items: departments,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose a department' },
     },
@@ -122,8 +115,8 @@ const config = defineConfig([
             label: 'Team',
             fullWidth: true,
             items: teams,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose a team' },
     },
@@ -134,8 +127,8 @@ const config = defineConfig([
             label: 'Office',
             fullWidth: true,
             items: offices,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose an office' },
     },
@@ -146,8 +139,8 @@ const config = defineConfig([
             label: 'Manager',
             fullWidth: true,
             options: managers,
-            getOptionLabel: getName,
-            isOptionEqualToValue: sameChoice,
+            getOptionLabel: (item: Option) => item.name,
+            isOptionEqualToValue: (option: Option, value: Option) => option.id === value.id,
         },
         rules: { required: 'Choose a manager' },
     },
@@ -158,8 +151,8 @@ const config = defineConfig([
             label: 'Cost center',
             fullWidth: true,
             items: costCenters,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose a cost center' },
     },
@@ -191,8 +184,8 @@ const config = defineConfig([
             multiple: true,
             fullWidth: true,
             options: equipment,
-            getOptionLabel: getName,
-            isOptionEqualToValue: sameChoice,
+            getOptionLabel: (item: Option) => item.name,
+            isOptionEqualToValue: (option: Option, value: Option) => option.id === value.id,
         },
     },
     {
@@ -201,8 +194,8 @@ const config = defineConfig([
         properties: {
             label: 'Systems to provision',
             items: accessGroups,
-            getItemLabel: getName,
-            getItemKey: getId,
+            getItemLabel: (item: Option) => item.name,
+            getItemKey: (item: Option) => item.id,
         },
         rules: { required: 'Choose at least one system' },
     },
@@ -225,49 +218,39 @@ const config = defineConfig([
     },
 ])
 
-export function EmployeeOnboardingForm() {
-    const [submitted, setSubmitted] = useState<string | null>(null)
+const groups = [
+    {
+        fields: ['firstName', 'lastName', 'preferredName', 'workEmail', 'phone', 'employeeId'],
+        columns: { xs: 1, sm: 2 },
+        gap: 2,
+    },
+    {
+        fields: [
+            'jobTitle',
+            'startDate',
+            'employmentType',
+            'department',
+            'team',
+            'office',
+            'manager',
+            'costCenter',
+            'salary',
+            'weeklyHours',
+        ],
+        columns: { xs: 1, sm: 2 },
+        gap: 2,
+    },
+    { fields: ['equipment', 'accessGroups'], columns: { xs: 1, sm: 2 }, gap: 2 },
+] satisfies FieldGroup<(typeof config)[number]['accessor']>[]
 
+export function EmployeeOnboardingForm({ onSubmit, onInvalid }: FormCallbacks) {
     return (
-        <>
-            <p>
-                Complete a saved employee draft. This 20-field form covers identity, placement,
-                compensation and access provisioning.
-            </p>
-            <FormBuilder
-                config={config}
-                defaultValues={{
-                    firstName: '',
-                    lastName: 'Rivera',
-                    preferredName: '',
-                    workEmail: 'sam.rivera@example.com',
-                    phone: '+1 202 555 0187',
-                    employeeId: 'HR-2048',
-                    jobTitle: 'Operations Analyst',
-                    startDate: '2026-11-03',
-                    employmentType: employmentTypes[0],
-                    department: departments[3],
-                    team: teams[0],
-                    office: offices[7],
-                    manager: managers[0],
-                    costCenter: costCenters[3],
-                    salary: 85000,
-                    weeklyHours: 40,
-                    equipment: [equipment[0], equipment[1]],
-                    accessGroups: [accessGroups[0]],
-                    policyAccepted: false,
-                    notes: '',
-                }}
-                onSubmit={(values, result) => {
-                    console.log('Employee onboarding submit', { values, result })
-                    setSubmitted(JSON.stringify(values, null, 2))
-                }}
-            />
-            {submitted !== null && (
-                <pre aria-label="Submitted values" className="submission-output">
-                    {submitted}
-                </pre>
-            )}
-        </>
+        <FormBuilder
+            config={config}
+            groups={groups}
+            defaultValues={employeeOnboardingDefaults}
+            onSubmit={onSubmit}
+            onInvalid={onInvalid}
+        />
     )
 }

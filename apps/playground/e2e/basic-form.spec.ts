@@ -1,10 +1,6 @@
 import { expect, test } from '@playwright/test'
 
 test('validates an empty field and submits typed text', async ({ page }) => {
-    const invalidLogs: string[] = []
-    page.on('console', (message) => {
-        if (message.text().startsWith('Invalid:')) invalidLogs.push(message.text())
-    })
     await page.goto('/basic')
     const basic = page.getByRole('region', { name: 'Basic form' })
 
@@ -12,25 +8,28 @@ test('validates an empty field and submits typed text', async ({ page }) => {
     await expect(name).toHaveValue('')
     await expect(basic.getByRole('button', { name: 'Reset' })).toHaveCount(0)
     await basic.getByRole('button', { name: 'Save form' }).click()
-    await expect(basic.getByText('Name is required')).toBeVisible()
-    await expect.poll(() => invalidLogs.length).toBe(1)
+    await expect(basic.locator('form').getByText('Name is required')).toBeVisible()
+    expect(JSON.parse(await basic.getByLabel('Validation errors').innerText()).name).toEqual({
+        type: 'required',
+        message: 'Name is required',
+    })
     await expect(name).toBeFocused()
 
     await name.fill('Ada')
     await basic.getByRole('button', { name: 'Save form' }).click()
     const confirmation = basic.getByRole('checkbox', { name: /I confirm the details/ })
-    await expect(basic.getByText('Confirmation is required')).toBeVisible()
+    await expect(basic.locator('form').getByText('Confirmation is required')).toBeVisible()
     await expect(confirmation).toBeFocused()
 
     await confirmation.check()
     await basic.getByRole('button', { name: 'Save form' }).click()
-    await expect(basic.getByText('Choose at least one role')).toBeVisible()
+    await expect(basic.locator('form').getByText('Choose at least one role')).toBeVisible()
     const editor = basic.getByRole('checkbox', { name: 'Editor' })
     await expect(editor).toBeFocused()
 
     await editor.check()
     await basic.getByRole('button', { name: 'Save form' }).click()
-    await expect(basic.getByText('Choose a primary role')).toBeVisible()
+    await expect(basic.locator('form').getByText('Choose a primary role')).toBeVisible()
 
     await basic.getByRole('combobox', { name: 'Primary role' }).click()
     await page.getByRole('option', { name: 'Editor' }).click()
@@ -40,11 +39,18 @@ test('validates an empty field and submits typed text', async ({ page }) => {
     await page.getByRole('option', { name: 'Reviewer' }).click()
     await page.keyboard.press('Escape')
     await basic.getByRole('button', { name: 'Save form' }).click()
-    await expect(basic.getByRole('status', { name: 'Submitted name' })).toHaveText('Ada')
-    await expect(basic.getByRole('status', { name: 'Submitted roles' })).toHaveText('Editor')
-    await expect(basic.getByRole('status', { name: 'Submitted primary role' })).toHaveText('Editor')
-    await expect(basic.getByRole('status', { name: 'Submitted additional roles' })).toHaveText(
-        'Editor, Reviewer',
-    )
-    expect(invalidLogs).toHaveLength(4)
+    const values = JSON.parse(await basic.getByLabel('Submitted values').innerText())
+    const editorRole = { id: 1, name: 'Editor' }
+    expect(values).toEqual({
+        name: 'Ada',
+        confirmed: true,
+        roles: [editorRole],
+        primaryRole: editorRole,
+        additionalRoles: [editorRole, { id: 2, name: 'Reviewer' }],
+    })
+    await basic.getByRole('button', { name: 'result', exact: true }).click()
+    expect(JSON.parse(await basic.getByLabel('Field result').innerText()).primaryRole).toEqual({
+        type: 'select',
+        value: editorRole,
+    })
 })

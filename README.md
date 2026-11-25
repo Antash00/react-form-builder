@@ -36,8 +36,9 @@ Maintainer instructions for npm publication are in [docs/releasing.md](docs/rele
 - `defaultValues` initialize forms for editing existing data. You may omit fields,
   but each supplied value must match its complete field type. Unavailable select
   and group choices are discarded before validation.
-- `config` and `defaultValues` are fixed for a mounted form. Remount `FormBuilder`
-  when switching to a different configuration.
+- Replace Select and Autocomplete option lists in `config` while the form is
+  mounted. `defaultValues` are read at mount. Remount `FormBuilder` for a
+  different record or field schema.
 - Optional `groups` arrange selected fields with MUI Grid. Other fields follow in config order.
 - Select, radio group, and checkbox group fields submit current item objects.
   `getItemKey` matches saved objects to current items. Autocomplete preserves
@@ -178,6 +179,16 @@ rendered after the groups in their config order.
 The current package provides the standalone `FormBuilder`. Complex forms can use
 React Hook Form and JSX directly. Rendering configured fields inside an existing
 form context is planned for a later API.
+
+## Async options
+
+For a create form, start with empty option lists and pass the loaded
+`items` or `options` in an updated `config`. Keep the same form mounted so
+users can type while the request runs. For an edit form, load the saved
+record and its options before mounting with `defaultValues`.
+
+See the [package guide](packages/mui/README.md#async-options) and the
+[Playground example](apps/playground/src/examples/AsyncOptionsForm.tsx).
 
 ## Development
 

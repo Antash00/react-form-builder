@@ -1,22 +1,9 @@
-import { useState } from 'react'
-import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
+import { reviewTeams } from '../variables/catalog'
+import { FormBuilder, defineConfig } from '@antash00/form-builder-mui'
+import type { FormCallbacks } from '../useFormOutput'
+import { selectCasesDefaults } from '../variables/defaultValues'
 
-type Team = { id: number; name: string }
-
-const teams: Team[] = [
-    { id: 0, name: 'Operations' },
-    { id: 1, name: 'Design' },
-    { id: 2, name: 'Engineering' },
-    { id: 3, name: 'Product' },
-    { id: 4, name: 'Data' },
-    { id: 5, name: 'Security' },
-    { id: 6, name: 'Finance' },
-    { id: 7, name: 'People' },
-    { id: 8, name: 'Marketing' },
-    { id: 9, name: 'Sales' },
-    { id: 10, name: 'Support' },
-    { id: 11, name: 'Legal' },
-]
+type Team = (typeof reviewTeams)[number]
 
 const config = defineConfig([
     {
@@ -28,7 +15,7 @@ const config = defineConfig([
             emptyLabel: 'No reviewer',
             fullWidth: true,
             variant: 'standard',
-            items: teams,
+            items: reviewTeams,
             getItemLabel: (team: Team) => team.name,
             getItemKey: (team: Team) => team.id,
         },
@@ -41,7 +28,7 @@ const config = defineConfig([
             helperText: 'Choose one or more teams',
             multiple: true,
             fullWidth: true,
-            items: teams,
+            items: reviewTeams,
             getItemLabel: (team: Team) => team.name,
             getItemKey: (team: Team) => team.id,
         },
@@ -49,34 +36,13 @@ const config = defineConfig([
     },
 ])
 
-export const SelectCasesForm = () => {
-    const [submitted, setSubmitted] = useState<{ reviewer: string; teams: string[] } | null>(null)
-
+export function SelectCasesForm({ onSubmit, onInvalid }: FormCallbacks) {
     return (
-        <>
-            <p>
-                The form starts with saved selections. Try clearing the reviewer and changing teams.
-            </p>
-            <FormBuilder
-                config={config}
-                defaultValues={{
-                    reviewer: { id: 0, name: 'Operations' },
-                    teams: [{ id: 1, name: 'Design' }],
-                }}
-                onSubmit={(values, result) => {
-                    console.log('Select cases submit', { values, result })
-                    setSubmitted({
-                        reviewer: values.reviewer?.name ?? 'None',
-                        teams: values.teams.map((team) => team.name),
-                    })
-                }}
-            />
-            {submitted && (
-                <>
-                    <output aria-label="Saved reviewer">{submitted.reviewer}</output>
-                    <output aria-label="Saved teams">{submitted.teams.join(', ')}</output>
-                </>
-            )}
-        </>
+        <FormBuilder
+            config={config}
+            defaultValues={selectCasesDefaults}
+            onSubmit={onSubmit}
+            onInvalid={onInvalid}
+        />
     )
 }

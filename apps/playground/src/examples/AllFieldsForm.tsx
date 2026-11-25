@@ -1,22 +1,9 @@
-import { useState } from 'react'
-import { defineConfig, FormBuilder } from '@antash00/form-builder-mui'
+import { allFieldRoles } from '../variables/catalog'
+import { type FieldGroup, FormBuilder, defineConfig } from '@antash00/form-builder-mui'
+import type { FormCallbacks } from '../useFormOutput'
+import { allFieldsDefaults } from '../variables/defaultValues'
 
-type Role = { id: number; name: string }
-
-const roles: Role[] = [
-    { id: 0, name: 'Editor' },
-    { id: 1, name: 'Reviewer' },
-    { id: 2, name: 'Publisher' },
-    { id: 3, name: 'Translator' },
-    { id: 4, name: 'Analyst' },
-    { id: 5, name: 'Designer' },
-    { id: 6, name: 'Support' },
-    { id: 7, name: 'Auditor' },
-    { id: 8, name: 'Administrator' },
-    { id: 9, name: 'Approver' },
-    { id: 10, name: 'Owner' },
-    { id: 11, name: 'Guest' },
-]
+type Role = (typeof allFieldRoles)[number]
 
 const config = defineConfig([
     {
@@ -62,7 +49,7 @@ const config = defineConfig([
         type: 'checkboxGroup',
         properties: {
             label: 'Roles (checkbox group)',
-            items: roles,
+            items: allFieldRoles,
             row: true,
             getItemLabel: (role: Role) => role.name,
             getItemKey: (role: Role) => role.id,
@@ -76,7 +63,7 @@ const config = defineConfig([
             label: 'Primary role (single select)',
             emptyLabel: 'No primary role',
             fullWidth: true,
-            items: roles,
+            items: allFieldRoles,
             getItemLabel: (role: Role) => role.name,
             getItemKey: (role: Role) => role.id,
         },
@@ -88,7 +75,7 @@ const config = defineConfig([
         properties: {
             label: 'Approval role (radio group)',
             row: true,
-            items: roles.slice(0, 3),
+            items: allFieldRoles.slice(0, 3),
             getItemLabel: (role: Role) => role.name,
             getItemKey: (role: Role) => role.id,
         },
@@ -100,7 +87,7 @@ const config = defineConfig([
             label: 'Additional roles (multiple select)',
             multiple: true,
             fullWidth: true,
-            items: roles,
+            items: allFieldRoles,
             getItemLabel: (role: Role) => role.name,
             getItemKey: (role: Role) => role.id,
         },
@@ -111,7 +98,7 @@ const config = defineConfig([
         properties: {
             label: 'Role (autocomplete)',
             fullWidth: true,
-            options: roles,
+            options: allFieldRoles,
             getOptionLabel: (role: Role) => role.name,
             isOptionEqualToValue: (option: Role, value: Role) => option.id === value.id,
         },
@@ -123,65 +110,25 @@ const config = defineConfig([
             label: 'Roles (multiple autocomplete)',
             multiple: true,
             fullWidth: true,
-            options: roles,
+            options: allFieldRoles,
             getOptionLabel: (role: Role) => role.name,
         },
     },
 ])
 
-export const AllFieldsForm = () => {
-    const [submitted, setSubmitted] = useState<string | null>(null)
+const groups = [
+    { fields: ['name', 'email'], columns: { xs: 1, md: 2 }, gap: 2 },
+    { fields: ['budget', 'notes'], columns: { xs: 1, md: 2 }, gap: 3 },
+] satisfies FieldGroup<(typeof config)[number]['accessor']>[]
 
+export function AllFieldsForm({ onSubmit, onInvalid }: FormCallbacks) {
     return (
-        <>
-            <p>Every supported field type in one form. Submit to inspect the inferred values.</p>
-            <FormBuilder
-                config={config}
-                groups={[
-                    { fields: ['name', 'email'], columns: { xs: 1, md: 2 }, gap: 2 },
-                    { fields: ['budget', 'notes'], columns: { xs: 1, md: 2 }, gap: 3 },
-                ]}
-                defaultValues={{
-                    name: '',
-                    email: '',
-                    budget: 0,
-                    notes: 'Existing note',
-                    confirmed: false,
-                    roles: [],
-                    primaryRole: null,
-                    approvalRole: null,
-                    additionalRoles: [roles[1]],
-                    searchRole: null,
-                    searchRoles: [],
-                }}
-                onSubmit={(values, result) => {
-                    console.log('All fields submit', { values, result })
-                    setSubmitted(
-                        JSON.stringify(
-                            {
-                                name: values.name,
-                                email: values.email,
-                                budget: values.budget,
-                                notes: values.notes,
-                                confirmed: values.confirmed,
-                                roles: values.roles.map((role) => role.name),
-                                primaryRole: values.primaryRole?.name ?? null,
-                                approvalRole: values.approvalRole?.name ?? null,
-                                additionalRoles: values.additionalRoles.map((role) => role.name),
-                                searchRole: values.searchRole?.name ?? null,
-                                searchRoles: values.searchRoles.map((role) => role.name),
-                            },
-                            null,
-                            2,
-                        ),
-                    )
-                }}
-            />
-            {submitted !== null && (
-                <pre aria-label="Submitted values" className="submission-output">
-                    {submitted}
-                </pre>
-            )}
-        </>
+        <FormBuilder
+            config={config}
+            groups={groups}
+            defaultValues={allFieldsDefaults}
+            onSubmit={onSubmit}
+            onInvalid={onInvalid}
+        />
     )
 }

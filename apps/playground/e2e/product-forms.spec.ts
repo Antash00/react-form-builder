@@ -9,24 +9,24 @@ test('employee onboarding validates a saved draft and submits domain selections'
     const firstName = form.getByRole('textbox', { name: 'First name' })
 
     await submit.click()
-    await expect(form.getByText('Enter a first name')).toBeVisible()
+    await expect(form.locator('form').getByText('Enter a first name')).toBeVisible()
     await expect(firstName).toBeFocused()
 
     await firstName.fill('A')
     await submit.click()
-    await expect(form.getByText('Use at least 2 characters')).toBeVisible()
+    await expect(form.locator('form').getByText('Use at least 2 characters')).toBeVisible()
     await firstName.fill('Sam')
 
     const email = form.getByRole('textbox', { name: 'Work email' })
     await email.fill('invalid')
     await submit.click()
-    await expect(form.getByText('Enter a valid email')).toBeVisible()
+    await expect(form.locator('form').getByText('Enter a valid email')).toBeVisible()
     await email.fill('sam.rivera@example.com')
 
     const salary = form.getByRole('spinbutton', { name: 'Annual salary' })
     await salary.fill('-1')
     await submit.click()
-    await expect(form.getByText('Salary cannot be negative')).toBeVisible()
+    await expect(form.locator('form').getByText('Salary cannot be negative')).toBeVisible()
     await salary.fill('85000')
 
     await form.getByRole('combobox', { name: 'Department' }).click()
@@ -50,10 +50,10 @@ test('supplier onboarding handles a 30-field draft and long option lists', async
     const legalName = form.getByRole('textbox', { name: 'Legal business name' })
 
     await submit.click()
-    await expect(form.getByText('Enter the legal business name')).toBeVisible()
+    await expect(form.locator('form').getByText('Enter the legal business name')).toBeVisible()
     await legalName.fill('A')
     await submit.click()
-    await expect(form.getByText('Use at least 2 characters')).toBeVisible()
+    await expect(form.locator('form').getByText('Use at least 2 characters')).toBeVisible()
     await legalName.fill('Acme Cloud Services')
 
     await form.getByRole('combobox', { name: 'Country' }).click()
@@ -63,7 +63,7 @@ test('supplier onboarding handles a 30-field draft and long option lists', async
     const annualSpend = form.getByRole('spinbutton', { name: 'Estimated annual spend' })
     await annualSpend.fill('-10')
     await submit.click()
-    await expect(form.getByText('Amount cannot be negative')).toBeVisible()
+    await expect(form.locator('form').getByText('Amount cannot be negative')).toBeVisible()
     await annualSpend.fill('125000')
 
     await form.getByRole('checkbox', { name: 'Compliance review completed' }).check()

@@ -38,8 +38,9 @@ application. The same applies to React 18.2.0 with `react-is@18.2.0`.
 - `defaultValues` initialize forms for editing existing data. You may omit fields,
   but each supplied value must match its complete field type. Unavailable select
   and group choices are discarded before validation.
-- `config` and `defaultValues` are fixed for a mounted form. To switch to a different
-  configuration, remount `FormBuilder` (for example, by changing its React `key`).
+- Replace Select and Autocomplete option lists in `config` while the form is
+  mounted. `defaultValues` are read at mount. Remount `FormBuilder` for a
+  different record or field schema (for example, by changing its React `key`).
 - Field accessors must be flat names without dots or brackets. The reserved key
   `prototype` and all own keys of `Object.prototype` are rejected.
 - Submit is disabled while an asynchronous `onSubmit` is pending.
@@ -204,6 +205,21 @@ rendered after the groups in their config order.
 The current package provides the standalone `FormBuilder`. Complex forms can use
 React Hook Form and JSX directly. Rendering configured fields inside an existing
 form context is planned for a later API.
+
+## Async options
+
+- **Create.** Mount with empty lists, then pass the response as Select
+  `properties.items` or Autocomplete `properties.options`. Keep the same
+  form key and field accessors so existing input stays in the form.
+- **Edit.** Load the record and its options before mounting `FormBuilder`.
+  Pass the saved values as `defaultValues` and the initial lists in `config`.
+  Use `getItemKey` for Select and compare object options by ID with
+  Autocomplete's `isOptionEqualToValue`.
+
+The application supplies the option lists. The
+[Playground example](https://github.com/Antash00/react-form-builder/blob/main/apps/playground/src/examples/AsyncOptionsForm.tsx)
+simulates loading a team list. You can enter a project name while teams load
+or open a saved project with its team selections once the list is ready.
 
 ## License
 

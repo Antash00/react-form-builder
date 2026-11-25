@@ -54,7 +54,8 @@ test('all-fields page exercises every supported field type', async ({ page }) =>
     await page.goto('/')
     await page.evaluate(() => Object.assign(window, { __routeMarker: true }))
     const navigation = page.getByRole('navigation', { name: 'Playground pages' })
-    await navigation.getByRole('link', { name: 'All fields' }).click()
+    await page.getByRole('button', { name: 'Examples' }).click()
+    await page.getByRole('menuitem', { name: 'All fields' }).click()
     await expect(page).toHaveURL(/\/all-fields$/)
     expect(await page.evaluate(() => '__routeMarker' in window)).toBe(true)
     await expect(navigation.getByRole('link', { name: 'All fields' })).toHaveAttribute(
@@ -76,27 +77,29 @@ test('all-fields page exercises every supported field type', async ({ page }) =>
     ).toContainText('Reviewer')
 
     await submit.click()
-    await expect(allFields.getByText('Enter a name')).toBeVisible()
+    await expect(allFields.locator('form').getByText('Enter a name')).toBeVisible()
     await expect(name).toBeFocused()
     await name.fill('A')
     await submit.click()
-    await expect(allFields.getByText('Use at least 2 characters')).toBeVisible()
+    await expect(allFields.locator('form').getByText('Use at least 2 characters')).toBeVisible()
 
     await name.fill('Ada')
     await email.fill('invalid')
     await submit.click()
-    await expect(allFields.getByText('Enter a valid email')).toBeVisible()
+    await expect(allFields.locator('form').getByText('Enter a valid email')).toBeVisible()
     await email.fill('ada@example.com')
 
     await submit.click()
-    await expect(allFields.getByText('Confirm the details', { exact: true })).toBeVisible()
+    await expect(
+        allFields.locator('form').getByText('Confirm the details', { exact: true }),
+    ).toBeVisible()
     await allFields.getByRole('checkbox', { name: 'I confirm the details' }).check()
     await submit.click()
-    await expect(allFields.getByText('Choose a role')).toBeVisible()
+    await expect(allFields.locator('form').getByText('Choose a role')).toBeVisible()
     await allFields.getByRole('checkbox', { name: 'Publisher' }).check()
 
     await submit.click()
-    await expect(allFields.getByText('Choose a primary role')).toBeVisible()
+    await expect(allFields.locator('form').getByText('Choose a primary role')).toBeVisible()
     await allFields.getByRole('combobox', { name: 'Primary role (single select)' }).click()
     await page.getByRole('option', { name: 'Editor' }).click()
 
@@ -121,11 +124,14 @@ test('all-fields page exercises every supported field type', async ({ page }) =>
         budget: 0,
         notes: 'Existing note',
         confirmed: true,
-        roles: ['Publisher'],
-        primaryRole: 'Editor',
-        approvalRole: 'Reviewer',
-        additionalRoles: ['Reviewer', 'Editor'],
-        searchRole: 'Reviewer',
-        searchRoles: ['Publisher'],
+        roles: [{ id: 2, name: 'Publisher' }],
+        primaryRole: { id: 0, name: 'Editor' },
+        approvalRole: { id: 1, name: 'Reviewer' },
+        additionalRoles: [
+            { id: 1, name: 'Reviewer' },
+            { id: 0, name: 'Editor' },
+        ],
+        searchRole: { id: 1, name: 'Reviewer' },
+        searchRoles: [{ id: 2, name: 'Publisher' }],
     })
 })
